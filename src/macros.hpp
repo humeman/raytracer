@@ -1,6 +1,10 @@
 #ifndef MACROS_HPP
 #define MACROS_HPP
 
+#include <limits>
+#include <stdexcept>
+#include <numbers>
+
 #define CLAMP(x, low, high) ((x < low) ? low : (x > high) ? high : x)
 #define FLOAT_EQ(a, b) (std::fabs((a) - (b)) < 0.000005f)
 
@@ -36,5 +40,9 @@ class TracerException : public std::exception {
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 #define EXC(...) TracerException(__FILE__ ":" STR(__LINE__), ##__VA_ARGS__)
+
+#define INFINITY std::numeric_limits<float>::infinity()
+#define DEG_TO_RAD(x) ((x) * std::numbers::pi / 180.0f)
+#define RAD_TO_DEG(x) ((x) * 180.0f / std::numbers::pi)
 
 #endif

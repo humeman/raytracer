@@ -3,6 +3,7 @@
 
 #include <string>
 #include <cstdint>
+#include <math/vec3.hpp>
 
 enum Channel {
     R = 0,
@@ -20,40 +21,46 @@ class Image {
         virtual ~Image() = default;
 
         /**
-         * Saves the image to a file.
-         * @param path The path to save to.
+         * Saves the image to a file
+         * @param path path to save to
          */
         virtual void save(std::string path) = 0;
 
         /**
-         * Gets the width of the image.
-         * @return The width of the image.
+         * @return width of the image
          */
         virtual int width() = 0;
 
         /**
-         * Gets the height of the image.
-         * @return The height of the image.
+         * @return height of the image
          */
         virtual int height() = 0;
 
         /**
-         * Gets the value of a pixel at a given coordinate.
-         * @param x The x coordinate of the pixel.
-         * @param y The y coordinate of the pixel.
-         * @param channel The channel to get.
-         * @return The value of the channel at the given coordinate, in the range [0.0, 1.0).
+         * Gets the value of a pixel at a given coordinate
+         * @param x
+         * @param y
+         * @param channel channel to get
+         * @return channel value, [0.0, 1.0]
          */
         virtual float at(int x, int y, Channel channel) = 0;
 
         /**
-         * Sets the value of a pixel at a given coordinate.
-         * @param x The x coordinate of the pixel.
-         * @param y The y coordinate of the pixel.
-         * @param channel The channel to set.
-         * @param value The value to set the channel to, in the range [0.0, 1.0).
+         * Sets the value of a pixel
+         * @param x
+         * @param y
+         * @param channel channel to set
+         * @param value value to set the channel to, [0.0, 1.0]
          */
         virtual void set(int x, int y, Channel channel, float value) = 0;
+
+        /**
+         * Sets the color of a pixel
+         * @param x
+         * @param y
+         * @param color color to set the pixel to, each [0.0, 1.0]
+         */
+        virtual void set(int x, int y, Color color) = 0;
 
         static void write_any(Image &image, std::string path);
         static Image *read_any(std::string path);

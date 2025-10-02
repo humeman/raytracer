@@ -130,7 +130,8 @@ void run(int argc, char *argv[]) {
     Vec3 pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
     Scene scene;
-    scene.add(new Sphere(Vec3(0.0f, 0.0f, -1.0f), 0.5f));
+    scene.add(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, -1.0f), 0.5f));
+    scene.add(std::make_shared<Sphere>(Vec3(0.0f, -100.5f, -1.0f), 100.0f));
 
     for (int y = 0; y < img->height(); y++) {
         CLOG("Calculating line " << y << " of " << img->height() << " (" << std::round((float) y / img->height() * 100.0f) << "%)");
@@ -139,10 +140,7 @@ void run(int argc, char *argv[]) {
             Vec3 ray_direction = pixel_center - ORIGIN;
             Ray r(ORIGIN, ray_direction);
 
-            Color color = scene.color(r);
-            img->set(x, y, R, color.a);
-            img->set(x, y, G, color.b);
-            img->set(x, y, B, color.c);
+            img->set(x, y, scene.color(r));
         }
     }
 

@@ -125,3 +125,22 @@ void PNGImage::set(int x, int y, Channel channel, float value) {
     throw MISSING_PNGPP_ERR;
     #endif
 }
+
+void PNGImage::set(int x, int y, Color color) {
+    #ifdef PNGPP
+    if (x >= w || x < 0 || y >= h || y < 0) {
+        throw std::runtime_error("coordinate " + std::to_string(x) + "x" + std::to_string(y) + " out of bounds (img " + std::to_string(w) + "x" + std::to_string(h) + ")");
+    }
+    if (color.a < 0.0f || color.a > 1.0f || color.b < 0.0f || color.b > 1.0f || color.c < 0.0f || color.c > 1.0f) {
+        throw std::runtime_error("color out of range of [0.0, 1.0)");
+    }
+    png::rgba_pixel pixel = data->get_pixel(x, y);
+    pixel.red = (uint8_t) (color.a * 255.999f);
+    pixel.green = (uint8_t) (color.b * 255.999f);
+    pixel.blue = (uint8_t) (color.c * 255.999f);
+    data->set_pixel(x, y, pixel);
+    #else
+    (void) x; (void) y; (void) color;
+    throw MISSING_PNGPP_ERR;
+    #endif
+}

@@ -121,6 +121,18 @@ void PPMImage::set(int x, int y, Channel channel, float value) {
     data[IDX(w, x, y, channel)] = value;
 }
 
+void PPMImage::set(int x, int y, Color color) {
+    if (x >= w || x < 0 || y >= h || y < 0) {
+        throw std::runtime_error("coordinate " + std::to_string(x) + "x" + std::to_string(y) + " out of bounds (img " + std::to_string(w) + "x" + std::to_string(h) + ")");
+    }
+    if (color.a < 0.0f || color.a > 1.0f || color.b < 0.0f || color.b > 1.0f || color.c < 0.0f || color.c > 1.0f) {
+        throw std::runtime_error("color out of range of [0.0, 1.0)");
+    }
+    data[IDX(w, x, y, R)] = color.a;
+    data[IDX(w, x, y, G)] = color.b;
+    data[IDX(w, x, y, B)] = color.c;
+}
+
 void PPMImage::set_binary(bool binary) {
     this->binary = binary;
 }

@@ -25,6 +25,7 @@ class PPMImage : public Image {
         int height() override;
         float at(int x, int y, Channel channel) override;
         void set(int x, int y, Channel channel, float value) override;
+        void set(int x, int y, Color color) override;
 
         void set_binary(bool binary);
 };

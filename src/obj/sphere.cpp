@@ -1,16 +1,28 @@
 #include "sphere.hpp"
+#include <cmath>
+#include <optional>
 
-bool Sphere::hit(const Ray &r, Color &res) const {
+bool Sphere::hit(const Ray &r, const Interval &ray_t, HitResult &result) const {
     Vec3 oc = center - r.get_origin();
-    float a = r.get_direction() * r.get_direction();
-    float b = -2.0f * (r.get_direction() * oc);
-    float c = (oc * oc) - radius * radius;
-    float discriminant = b * b - 4 * a * c;
-    if (discriminant >= 0) {
-        res.a = 1.0f;
-        res.b = 0.1f;
-        res.c = 0.1f;
-        return true;
+    float a = r.get_direction().magnitude_squared();
+    float h = r.get_direction() * oc;
+    float c = oc.magnitude_squared() - radius * radius;
+
+    float discriminant = h * h - a * c;
+    if (discriminant < 0) return false;
+
+    float sqrtd = std::sqrt(discriminant);
+    float root = (h - sqrtd) / a;
+    if (!ray_t.surrounds(root)) {
+        root = (h + sqrtd) / a;
+        if (!ray_t.surrounds(root)) {
+            return false;
+        }
     }
-    return false;
+
+    result.t = root;
+    result.point = r.at(result.t);
+    Vec3 outward_normal = (result.point - center) / radius;
+    result.set_face_normal(r, outward_normal);
+    return true;
 }

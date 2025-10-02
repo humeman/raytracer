@@ -3,6 +3,7 @@
 
 #include <math/ray.hpp>
 #include <math/vec3.hpp>
+#include <math/interval.hpp>
 #include <obj/object.hpp>
 
 class Sphere : public Object {
@@ -12,7 +13,7 @@ class Sphere : public Object {
 
         Sphere(const Vec3 &center, const float &radius) : center(center), radius(radius) {}
 
-        bool hit(const Ray &r, Color &res) const override;
+        bool hit(const Ray &r, const Interval &ray_t, HitResult &result) const override;
 };
 
 #endif

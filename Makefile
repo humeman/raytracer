@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++17 -g -Isrc
+CXXFLAGS = -Wall -Wextra -Werror -std=c++20 -g -Isrc
 LDFLAGS =
 
 LIBPNG_AVAILABLE := $(shell pkg-config --exists libpng && echo "1" || echo "0")
@@ -11,15 +11,27 @@ ifeq ($(LIBPNG_AVAILABLE)$(PNGPP_HEADERS),11)
     LDFLAGS += $(shell pkg-config --libs libpng)
 endif
 
-raytracer: build/main.o build/images/ppm.o build/images/png.o build/images/image.o build/math/vec3.o build/obj/scene.o build/obj/sphere.o build/math/ray.o
+raytracer: \
+		build/main.o \
+		build/images/ppm.o \
+		build/images/png.o \
+		build/images/image.o \
+		build/math/interval.o \
+		build/math/vec3.o \
+		build/math/ray.o \
+		build/obj/object.o \
+		build/obj/scene.o \
+		build/obj/sphere.o 
 	mkdir -p build
 	$(CXX) $(CXXFLAGS) -o raytracer \
 		build/main.o \
 		build/images/ppm.o \
 		build/images/png.o \
 		build/images/image.o \
-		build/math/vec3.o \
+		build/math/interval.o \
 		build/math/ray.o \
+		build/math/vec3.o \
+		build/obj/object.o \
 		build/obj/scene.o \
 		build/obj/sphere.o \
 		$(LDFLAGS)
@@ -48,6 +60,14 @@ build/math/ray.o: src/math/ray.cpp src/math/ray.hpp src/macros.hpp
 	mkdir -p build/math
 	$(CXX) $(CXXFLAGS) -c src/math/ray.cpp -o build/math/ray.o
 
+build/math/interval.o: src/math/interval.cpp src/math/interval.hpp src/macros.hpp
+	mkdir -p build/math
+	$(CXX) $(CXXFLAGS) -c src/math/interval.cpp -o build/math/interval.o
+
+build/obj/object.o: src/obj/object.cpp src/obj/object.hpp src/macros.hpp
+	mkdir -p build/obj
+	$(CXX) $(CXXFLAGS) -c src/obj/object.cpp -o build/obj/object.o
+
 build/obj/scene.o: src/obj/scene.cpp src/obj/scene.hpp src/macros.hpp src/obj/object.hpp
 	mkdir -p build/obj
 	$(CXX) $(CXXFLAGS) -c src/obj/scene.cpp -o build/obj/scene.o
@@ -60,10 +80,6 @@ build/obj/sphere.o: src/obj/sphere.cpp src/obj/sphere.hpp src/macros.hpp src/obj
 clean:
 	rm -rf build/ raytracer
 
-.PHONY: info
-info:
-	@echo "libpng available: $(LIBPNG_AVAILABLE)"
-	@echo "png++ headers available: $(PNGPP_HEADERS)"
-	@echo "PNG++ support enabled: $(shell test '$(LIBPNG_AVAILABLE)$(PNGPP_HEADERS)' = '11' && echo 'YES' || echo 'NO')"
-	@echo "CXXFLAGS: $(CXXFLAGS)"
-	@echo "LDFLAGS: $(LDFLAGS)"
+.PHONY: libs
+libs:
+	@echo "libpng++: $(shell test '$(LIBPNG_AVAILABLE)$(PNGPP_HEADERS)' = '11' && echo 'YES' || echo 'NO')"

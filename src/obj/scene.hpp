@@ -1,20 +1,21 @@
 #ifndef SCENE_HPP
 #define SCENE_HPP
 
-#include <vector>
 #include <obj/object.hpp>
+#include <math/interval.hpp>
+
+#include <vector>
+#include <memory>
 
 class Scene {
     private:
-        std::vector<Object *> objects;
+        std::vector<std::shared_ptr<Object>> objects;
 
     public:
-        Scene() = default;
-        ~Scene();
+        void add(std::shared_ptr<Object> obj);
+        void remove(std::shared_ptr<Object> obj);
 
-        void add(Object *obj);
-        void remove(Object *obj);
-
+        bool hit(const Ray &r, const Interval &ray_t, HitResult &result) const;
         Color color(const Ray &r) const;
 };
 
