@@ -8,7 +8,7 @@ class Interval {
         float min;
         float max;
 
-        Interval() : min(INFINITY), max(-INFINITY) {}
+        Interval() : min(FLOAT_INFINITY), max(-FLOAT_INFINITY) {}
         Interval(float min, float max) : min(min), max(max) {}
 
         float size() const;

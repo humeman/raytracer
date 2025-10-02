@@ -4,20 +4,16 @@
 #include <obj/sphere.hpp>
 #include <obj/scene.hpp>
 #include <macros.hpp>
+#include <camera.hpp>
 
 #include <stdexcept>
 #include <iostream>
 #include <cmath>
+#include <chrono>
 
 #define DEFAULT_WIDTH 400
 #define DEFAULT_HEIGHT 200
 #define DEFAULT_FILE "out.png"
-
-#define FOCAL_LENGTH 1.0f
-#define VIEWPORT_HEIGHT 2.0f
-#define VIEWPORT_WIDTH(w, h) (VIEWPORT_HEIGHT * ((float) w) / ((float) h))
-#define ORIGIN Vec3(0.0f, 0.0f, 0.0f)
-
 
 class Flags {
     private:
@@ -116,39 +112,78 @@ class Flags {
         }
 };
 
+std::string lpad(std::string str, size_t len) {
+    std::string res = "";
+    size_t count = len < str.length() ? 0 : len - str.length();
+    for (size_t i = 0; i < count; i++) {
+        res += ' ';
+    }
+    return res + str;
+}
+
+std::string duration_str(std::chrono::seconds duration) {
+    uint64_t total = duration.count();
+    uint64_t days = total / 86400;
+    uint64_t hours = (total % 86400) / 3600;
+    uint64_t minutes = (total % 3600) / 60;
+    uint64_t seconds = total % 60;
+
+    std::string res;
+    if (days > 0) res += lpad(std::to_string(days), 2) + "d ";
+    if (days > 0 || hours > 0) res += lpad(std::to_string(hours), 2) + "h ";
+    if (days > 0 || hours > 0 || minutes > 0) res += lpad(std::to_string(minutes), 2) + "m ";
+    res += lpad(std::to_string(seconds), 2) + "s";
+    return res;
+}
+
+void progress(int x, int y, CameraParams params, std::chrono::system_clock::time_point start) {
+    if (x != 0) return;
+    
+    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+    
+    float prop = (float) (y * params.width + x) / (params.width * params.height);
+
+    std::string est = "";
+    if (prop > 0.05 && prop < 0.999) {
+        std::chrono::nanoseconds elapsed = now - start;
+        // it's taken 'elapsed' time to complete 'prop' 
+        // calculate the total time
+        // (giving up on these types. thanks C++)
+        auto total = elapsed / prop;
+        auto remaining = total - elapsed;
+        est = " (est. " + duration_str(std::chrono::duration_cast<std::chrono::seconds>(remaining)) + ")";
+    }
+
+    std::string coord = "y=" + lpad(std::to_string(y), 5);
+    std::string percent = lpad(std::to_string((int) (prop * 100.0f)), 3);
+
+    CLOG("Rendering (" << coord << "): " << percent << "%" << est);
+}
+
 void run(int argc, char *argv[]) {
     Flags flags(argc, argv);
     if (flags.exit) return;
-    PPMImage *img = new PPMImage(flags.width, flags.height);
 
-    Vec3 viewport_u(VIEWPORT_WIDTH(img->width(), img->height()), 0, 0);
-    Vec3 viewport_v(0, -VIEWPORT_HEIGHT, 0);
-    Vec3 pixel_delta_u = viewport_u / (float) img->width();
-    Vec3 pixel_delta_v = viewport_v / (float) img->height();
-
-    Vec3 viewport_upper_left = ORIGIN - Vec3(0, 0, FOCAL_LENGTH) - (viewport_u / 2.0f) - (viewport_v / 2.0f);
-    Vec3 pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+    auto start = std::chrono::system_clock::now();
 
     Scene scene;
     scene.add(std::make_shared<Sphere>(Vec3(0.0f, 0.0f, -1.0f), 0.5f));
     scene.add(std::make_shared<Sphere>(Vec3(0.0f, -100.5f, -1.0f), 100.0f));
 
-    for (int y = 0; y < img->height(); y++) {
-        CLOG("Calculating line " << y << " of " << img->height() << " (" << std::round((float) y / img->height() * 100.0f) << "%)");
-        for (int x = 0; x < img->width(); x++) {
-            Vec3 pixel_center = pixel00_loc + ((float) x * pixel_delta_u) + ((float) y * pixel_delta_v);
-            Vec3 ray_direction = pixel_center - ORIGIN;
-            Ray r(ORIGIN, ray_direction);
+    CameraParams params;
+    params.width = flags.width;
+    params.height = flags.height;
+    params.progress = [params, start](int x, int y) {
+        progress(x, y, params, start);
+    };
+    Camera camera(params);
+    camera.render(scene);
 
-            img->set(x, y, scene.color(r));
-        }
-    }
-
+    std::shared_ptr<Image> image = camera.image();
     CLOG("Writing " << flags.file << "...");
-    Image::write_any(*img, flags.file);
+    Image::write_any(*image, flags.file);
     CLOG("Done!");
     std::cout << std::endl;
-    delete img;
 }
 
 int main(int argc, char *argv[]) {

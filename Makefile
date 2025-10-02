@@ -13,6 +13,7 @@ endif
 
 raytracer: \
 		build/main.o \
+		build/camera.o \
 		build/images/ppm.o \
 		build/images/png.o \
 		build/images/image.o \
@@ -25,6 +26,7 @@ raytracer: \
 	mkdir -p build
 	$(CXX) $(CXXFLAGS) -o raytracer \
 		build/main.o \
+		build/camera.o \
 		build/images/ppm.o \
 		build/images/png.o \
 		build/images/image.o \
@@ -39,6 +41,10 @@ raytracer: \
 build/main.o: src/main.cpp src/macros.hpp
 	mkdir -p build
 	$(CXX) $(CXXFLAGS) -c src/main.cpp -o build/main.o
+
+build/camera.o: src/camera.cpp src/camera.hpp src/macros.hpp
+	mkdir -p build
+	$(CXX) $(CXXFLAGS) -c src/camera.cpp -o build/camera.o
 
 build/images/image.o: src/images/image.cpp src/images/image.hpp src/macros.hpp
 	mkdir -p build/images

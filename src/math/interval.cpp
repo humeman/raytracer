@@ -12,4 +12,4 @@ bool Interval::surrounds(float x) const {
 }
 
 const Interval Interval::empty = Interval();
-const Interval Interval::universe = Interval(-INFINITY, INFINITY);
+const Interval Interval::universe = Interval(-FLOAT_INFINITY, FLOAT_INFINITY);

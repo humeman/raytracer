@@ -16,7 +16,6 @@ class Scene {
         void remove(std::shared_ptr<Object> obj);
 
         bool hit(const Ray &r, const Interval &ray_t, HitResult &result) const;
-        Color color(const Ray &r) const;
 };
 
 #endif
