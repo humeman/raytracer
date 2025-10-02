@@ -1,0 +1,5 @@
+*.o
+raytracer
+*.ppm
+.vscode
+build
