@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++17 -g
+CXXFLAGS = -Wall -Wextra -Werror -std=c++17 -g -Isrc
 LDFLAGS =
 
 LIBPNG_AVAILABLE := $(shell pkg-config --exists libpng && echo "1" || echo "0")
@@ -11,7 +11,7 @@ ifeq ($(LIBPNG_AVAILABLE)$(PNGPP_HEADERS),11)
     LDFLAGS += $(shell pkg-config --libs libpng)
 endif
 
-raytracer: build/main.o build/images/ppm.o build/images/png.o build/images/image.o build/math/vec3.o
+raytracer: build/main.o build/images/ppm.o build/images/png.o build/images/image.o build/math/vec3.o build/obj/scene.o build/obj/sphere.o build/math/ray.o
 	mkdir -p build
 	$(CXX) $(CXXFLAGS) -o raytracer \
 		build/main.o \
@@ -19,6 +19,9 @@ raytracer: build/main.o build/images/ppm.o build/images/png.o build/images/image
 		build/images/png.o \
 		build/images/image.o \
 		build/math/vec3.o \
+		build/math/ray.o \
+		build/obj/scene.o \
+		build/obj/sphere.o \
 		$(LDFLAGS)
 
 build/main.o: src/main.cpp src/macros.hpp
@@ -40,6 +43,18 @@ build/images/png.o: src/images/png.cpp src/images/png.hpp src/images/image.hpp s
 build/math/vec3.o: src/math/vec3.cpp src/math/vec3.hpp src/macros.hpp
 	mkdir -p build/math
 	$(CXX) $(CXXFLAGS) -c src/math/vec3.cpp -o build/math/vec3.o
+
+build/math/ray.o: src/math/ray.cpp src/math/ray.hpp src/macros.hpp
+	mkdir -p build/math
+	$(CXX) $(CXXFLAGS) -c src/math/ray.cpp -o build/math/ray.o
+
+build/obj/scene.o: src/obj/scene.cpp src/obj/scene.hpp src/macros.hpp src/obj/object.hpp
+	mkdir -p build/obj
+	$(CXX) $(CXXFLAGS) -c src/obj/scene.cpp -o build/obj/scene.o
+
+build/obj/sphere.o: src/obj/sphere.cpp src/obj/sphere.hpp src/macros.hpp src/obj/object.hpp
+	mkdir -p build/obj
+	$(CXX) $(CXXFLAGS) -c src/obj/sphere.cpp -o build/obj/sphere.o
 
 .PHONY: clean
 clean:

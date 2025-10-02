@@ -1,7 +1,7 @@
-#include "image.hpp"
-#include "png.hpp"
-#include "ppm.hpp"
-#include "../macros.hpp"
+#include <images/image.hpp>
+#include <images/png.hpp>
+#include <images/ppm.hpp>
+#include <macros.hpp>
 
 bool string_ends_with(std::string target, std::string end) {
     return target.size() >= end.size() && target.substr(target.size() - end.size()) == end;

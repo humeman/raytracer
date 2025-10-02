@@ -1,7 +1,7 @@
 #ifndef PPM_HPP
 #define PPM_HPP
 
-#include "image.hpp"
+#include <images/image.hpp>
 #include <cstdint>
 
 /**

@@ -1,5 +1,5 @@
-#include "png.hpp"
-#include "../macros.hpp"
+#include <images/png.hpp>
+#include <macros.hpp>
 
 #include <fstream>
 
@@ -104,7 +104,7 @@ void PNGImage::set(int x, int y, Channel channel, float value) {
     if (x >= w || x < 0 || y >= h || y < 0) {
         throw std::runtime_error("coordinate " + std::to_string(x) + "x" + std::to_string(y) + " out of bounds (img " + std::to_string(w) + "x" + std::to_string(h) + ")");
     }
-    if (value < 0.0f || value >= 0.9999995f) {
+    if (value < 0.0f || value > 1.0f) {
         throw std::runtime_error("value " + std::to_string(value) + " out of range of [0.0, 1.0)");
     }
     png::rgba_pixel pixel = data->get_pixel(x, y);

@@ -1,7 +1,7 @@
 #ifndef RAY_H
 #define RAY_H
 
-#include "vec3.hpp"
+#include <math/vec3.hpp>
 
 class Ray {
     private:
@@ -15,9 +15,7 @@ class Ray {
         const Vec3 &get_origin() const;
         const Vec3 &get_direction() const;
 
-        Vec3 at(float t) const {
-            return origin + direction * t;
-        }
+        Vec3 at(float t) const;
 };
 
 #endif

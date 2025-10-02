@@ -1,16 +1,16 @@
-#include "vec3.hpp"
+#include <math/vec3.hpp>
 #include <cmath>
 
-Vec3 Vec3::to_unit() {
+Vec3 Vec3::to_unit() const {
     float magnitude = this->magnitude();
     return Vec3(a / magnitude, b / magnitude, c / magnitude);
 }
 
-float Vec3::magnitude() {
+float Vec3::magnitude() const {
     return std::sqrt(a * a + b * b + c * c);
 }
 
-float Vec3::magnitude_squared() {
+float Vec3::magnitude_squared() const {
     return a * a + b * b + c * c;
 }
 
@@ -34,8 +34,8 @@ void operator-=(Vec3 &a, const Vec3 &b) {
     a.c -= b.c;
 }
 
-Vec3 operator*(const Vec3 &a, const Vec3 &b) {
-    return Vec3(a.a * b.a, a.b * b.b, a.c * b.c);
+float operator*(const Vec3 &a, const Vec3 &b) {
+    return a.a * b.a + a.b * b.b + a.c * b.c;
 }
 
 void operator*=(Vec3 &a, const Vec3 &b) {
@@ -59,6 +59,11 @@ void operator^=(Vec3 &a, const Vec3 &b) {
 Vec3 operator*(const Vec3 &a, const float &s) {
     return Vec3(a.a * s, a.b * s, a.c * s);
 }
+
+Vec3 operator*(const float &s, const Vec3 &a) {
+    return Vec3(a.a * s, a.b * s, a.c * s);
+}
+
 void operator*=(Vec3 &a, const float &s) {
     a.a *= s;
     a.b *= s;

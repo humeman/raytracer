@@ -1,4 +1,4 @@
-#include "ray.hpp"
+#include <math/ray.hpp>
 
 const Vec3 &Ray::get_origin() const {
     return origin;

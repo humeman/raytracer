@@ -1,7 +1,7 @@
 #ifndef PNG_HPP
 #define PNG_HPP
 
-#include "image.hpp"
+#include <images/image.hpp>
 #include <cstdint>
 #include <png++/png.hpp>
 
