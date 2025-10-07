@@ -13,7 +13,7 @@ class PPMImage : public Image {
         int h;
         bool binary;
 
-        float *data;
+        double *data;
 
     public:
         PPMImage(std::string path);
@@ -23,8 +23,8 @@ class PPMImage : public Image {
         void save(std::string path) override;
         int width() override;
         int height() override;
-        float at(int x, int y, Channel channel) override;
-        void set(int x, int y, Channel channel, float value) override;
+        double at(int x, int y, Channel channel) override;
+        void set(int x, int y, Channel channel, double value) override;
         void set(int x, int y, Color color) override;
 
         void set_binary(bool binary);

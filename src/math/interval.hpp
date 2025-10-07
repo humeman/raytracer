@@ -4,18 +4,25 @@
 #include <macros.hpp>
 
 class Interval {
+    private:
+        std::uniform_real_distribution<double> *distribution;
+        std::mt19937 generator;
+
     public:
-        float min;
-        float max;
+        const double min;
+        const double max;
 
-        Interval() : min(FLOAT_INFINITY), max(-FLOAT_INFINITY) {}
-        Interval(float min, float max) : min(min), max(max) {}
+        Interval();
+        Interval(double min, double max);
+        ~Interval();
 
-        float size() const;
-        bool contains(float x) const;
-        bool surrounds(float x) const;
+        double size() const;
+        bool contains(double x) const;
+        bool surrounds(double x) const;
+        double clamp(double in) const;
+        double random();
 
-        static const Interval empty, universe;
+        static Interval empty, universe;
 };
 
 #endif

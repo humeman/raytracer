@@ -1,32 +1,43 @@
 #ifndef VEC3_HPP
 #define VEC3_HPP
 
+#include <math/interval.hpp>
+
 class Vec3 {
     public:
-        float a;
-        float b;
-        float c;
+        double a;
+        double b;
+        double c;
 
-        Vec3() : a(0.0f), b(0.0f), c(0.0f) {}
-        Vec3(float a, float b, float c) : a(a), b(b), c(c) {}
+        Vec3() : a(0.0), b(0.0), c(0.0) {}
+        Vec3(double a, double b, double c) : a(a), b(b), c(c) {}
 
         Vec3 to_unit() const;
-        float magnitude() const;
-        float magnitude_squared() const;
+        double magnitude() const;
+        double magnitude_squared() const;
+        bool zero() const;
 
         friend Vec3 operator+(const Vec3 &a, const Vec3 &b);
         friend void operator+=(Vec3 &a, const Vec3 &b);
         friend Vec3 operator-(const Vec3 &a, const Vec3 &b);
         friend void operator-=(Vec3 &a, const Vec3 &b);
-        friend float operator*(const Vec3 &a, const Vec3 &b);
+        friend double operator*(const Vec3 &a, const Vec3 &b);
         friend void operator*=(Vec3 &a, const Vec3 &b);
+        friend Vec3 operator%(const Vec3 &a, const Vec3 &b); // multiply by element
+        friend void operator%=(Vec3 &a, const Vec3 &b);
         friend Vec3 operator^(const Vec3 &a, const Vec3 &b); // cross product
         friend void operator^=(Vec3 &a, const Vec3 &b);
-        friend Vec3 operator*(const Vec3 &a, const float &s);
-        friend Vec3 operator*(const float &s, const Vec3 &a);
-        friend void operator*=(Vec3 &a, const float &s);
-        friend Vec3 operator/(const Vec3 &a, const float &v);
-        friend void operator/=(Vec3 &a, const float &v);
+        friend Vec3 operator*(const Vec3 &a, const double &s);
+        friend Vec3 operator*(const double &s, const Vec3 &a);
+        friend void operator*=(Vec3 &a, const double &s);
+        friend Vec3 operator/(const Vec3 &a, const double &v);
+        friend void operator/=(Vec3 &a, const double &v);
+
+        static Vec3 random();
+        static Vec3 random(Interval &range);
+        static Vec3 random_unit();
+
+        const static Vec3 white, black;
 };
 
 using Color = Vec3;

@@ -36,7 +36,7 @@ make
   - default `200`
 - `-a/--aspect-ratio (ratio)`: change resulting aspect ratio
   - if specified, you can also optionally provide either `-x/--width` or `-y/--height` and the aspect ratio will be applied to get the other size. otherwise, it's applied to the height using the default width.
-  - floats or ratios (ie, `16:9`) are allowed
+  - doubles or ratios (ie, `16:9`) are allowed
 - `(filename)`: change output file
   - `.ppm` and `.png` are supported
   - default `out.png`

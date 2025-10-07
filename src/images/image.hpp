@@ -43,7 +43,7 @@ class Image {
          * @param channel channel to get
          * @return channel value, [0.0, 1.0]
          */
-        virtual float at(int x, int y, Channel channel) = 0;
+        virtual double at(int x, int y, Channel channel) = 0;
 
         /**
          * Sets the value of a pixel
@@ -52,7 +52,7 @@ class Image {
          * @param channel channel to set
          * @param value value to set the channel to, [0.0, 1.0]
          */
-        virtual void set(int x, int y, Channel channel, float value) = 0;
+        virtual void set(int x, int y, Channel channel, double value) = 0;
 
         /**
          * Sets the color of a pixel

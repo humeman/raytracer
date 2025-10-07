@@ -1,15 +1,37 @@
 #include <math/interval.hpp>
 
 
-float Interval::size() const {
-    return max - min;
+Interval::Interval() : min(DOUBLE_INFINITY), max(-DOUBLE_INFINITY) {
+    distribution = nullptr;
 }
-bool Interval::contains(float x) const {
-    return x >= min && x <= max;
+Interval::Interval(double min, double max) : min(min), max(max) {
+    distribution = new std::uniform_real_distribution<double>(min, max);
 }
-bool Interval::surrounds(float x) const {
-    return x > min && x < max;
+Interval::~Interval() {
+    if (distribution != nullptr) {
+        delete distribution;
+    }
 }
 
-const Interval Interval::empty = Interval();
-const Interval Interval::universe = Interval(-FLOAT_INFINITY, FLOAT_INFINITY);
+double Interval::size() const {
+    return max - min;
+}
+bool Interval::contains(double x) const {
+    return x >= min && x <= max;
+}
+bool Interval::surrounds(double x) const {
+    return x > min && x < max;
+}
+double Interval::clamp(double in) const {
+    return CLAMP(in, min, max);
+}
+double Interval::random() {
+    if (distribution == nullptr) {
+        throw EXC("can't use random() with an empty interval");
+    }
+    double rand = (*distribution)(generator);
+    return min + (max - min) * rand;
+}
+
+Interval Interval::empty = Interval();
+Interval Interval::universe = Interval(-DOUBLE_INFINITY, DOUBLE_INFINITY);

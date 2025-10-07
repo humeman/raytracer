@@ -6,8 +6,8 @@
 #include <numbers>
 #include <random>
 
-#define CLAMP(x, low, high) ((x < low) ? low : (x > high) ? high : x)
-#define FLOAT_EQ(a, b) (std::fabs((a) - (b)) < 0.000005f)
+#define CLAMP(x, low, high) ((x < low) ? low : ((x > high) ? high : x))
+#define DOUBLE_EQ(a, b) (std::fabs((a) - (b)) < 0.000005)
 
 // https://www.youtube.com/watch?v=dXqtrHJAqVM
 #define CLOG(x) std::clog << "\33[2K\r" << x << " " << std::flush;
@@ -42,14 +42,12 @@ class TracerException : public std::exception {
 #define STR(x) STR_HELPER(x)
 #define EXC(...) TracerException(__FILE__ ":" STR(__LINE__), ##__VA_ARGS__)
 
-#define FLOAT_INFINITY std::numeric_limits<float>::infinity()
-#define DEG_TO_RAD(x) ((x) * std::numbers::pi / 180.0f)
-#define RAD_TO_DEG(x) ((x) * 180.0f / std::numbers::pi)
+#define DOUBLE_INFINITY std::numeric_limits<double>::infinity()
+#define DEG_TO_RAD(x) ((x) * std::numbers::pi / 180.0)
+#define RAD_TO_DEG(x) ((x) * 180.0 / std::numbers::pi)
+#define ON_HEMISPHERE(normal, vector) (((normal) * (vector)) > 0.0 ? (vector) : (vector * -1.0))
+#define REFLECT(v, n) ((v) - 2 * ((v) * (n)) * (n))
 
-const std::uniform_real_distribution<float> RAND_FLOAT_DIST(0.0f, 1.0f);
-const std::mt19937 RAND_FLOAT_GEN;
-
-#define RAND_FLOAT() (RAND_FLOAT_DIST(RAND_FLOAT_GEN))
-#define RAND_FLOAT_RANGE(min, max) ((min) + (max - min) * RAND_FLOAT())
+#define LINEAR_TO_GAMMA(x) ((x) > 0 ? std::sqrt(x) : 0)
 
 #endif

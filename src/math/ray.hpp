@@ -9,13 +9,13 @@ class Ray {
         Vec3 direction;
 
     public:
-        Ray() : origin(Vec3()), direction(Vec3(1.0f, 0.0f, 0.0f)) {}
+        Ray() : origin(Vec3()), direction(Vec3(1.0, 0.0, 0.0)) {}
         Ray(const Vec3 &origin, const Vec3 &direction) : origin(origin), direction(direction) {}
 
         const Vec3 &get_origin() const;
         const Vec3 &get_direction() const;
 
-        Vec3 at(float t) const;
+        Vec3 at(double t) const;
 };
 
 #endif

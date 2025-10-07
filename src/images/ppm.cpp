@@ -27,18 +27,18 @@ PPMImage::PPMImage(std::string path) {
         throw std::runtime_error("color depth isn't supported: " + word);
     }
     if (binary) file.get();
-    data = new float[w * h * 3];
+    data = new double[w * h * 3];
     uint8_t byte;
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
             for (Channel c : {R, G, B}) {
                 if (binary) {
                     file.read((char *) &byte, 1);
-                    data[IDX(w, x, y, c)] = byte / 256.0f;
+                    data[IDX(w, x, y, c)] = byte / 256.0;
                 }
                 else {
                     file >> word;
-                    data[IDX(w, x, y, c)] = std::stoi(word) / 256.0f;
+                    data[IDX(w, x, y, c)] = std::stoi(word) / 256.0;
                 }
             }
         }
@@ -50,14 +50,14 @@ PPMImage::PPMImage(int width, int height) {
     w = width;
     h = height;
     binary = true;
-    data = new float[w * h * 3]();
+    data = new double[w * h * 3]();
 }
 
 PPMImage::PPMImage(Image &image) {
     w = image.width();
     h = image.height();
     binary = true;
-    data = new float[w * h * 3];
+    data = new double[w * h * 3];
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
             for (Channel c : {R, G, B}) {
@@ -84,7 +84,7 @@ void PPMImage::save(std::string path) {
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
             for (Channel c : {R, G, B}) {
-                value = (uint8_t) (data[IDX(w, x, y, c)] * 255.999f);
+                value = (uint8_t) (data[IDX(w, x, y, c)] * 255.999);
                 if (binary) {
                     file.write((char *) &value, 1);
                 } else {
@@ -104,18 +104,18 @@ int PPMImage::height() {
     return h;
 }
 
-float PPMImage::at(int x, int y, Channel channel) {
+double PPMImage::at(int x, int y, Channel channel) {
     if (x >= w || x < 0 || y >= h || y < 0) {
         throw std::runtime_error("coordinate " + std::to_string(x) + "x" + std::to_string(y) + " out of bounds (img " + std::to_string(w) + "x" + std::to_string(h) + ")");
     }
     return data[IDX(w, x, y, channel)];
 }
 
-void PPMImage::set(int x, int y, Channel channel, float value) {
+void PPMImage::set(int x, int y, Channel channel, double value) {
     if (x >= w || x < 0 || y >= h || y < 0) {
         throw std::runtime_error("coordinate " + std::to_string(x) + "x" + std::to_string(y) + " out of bounds (img " + std::to_string(w) + "x" + std::to_string(h) + ")");
     }
-    if (value < 0.0f || value > 1.0f) {
+    if (value < 0.0 || value > 1.0) {
         throw std::runtime_error("value " + std::to_string(value) + " out of range of [0.0, 1.0)");
     }
     data[IDX(w, x, y, channel)] = value;
@@ -125,7 +125,7 @@ void PPMImage::set(int x, int y, Color color) {
     if (x >= w || x < 0 || y >= h || y < 0) {
         throw std::runtime_error("coordinate " + std::to_string(x) + "x" + std::to_string(y) + " out of bounds (img " + std::to_string(w) + "x" + std::to_string(h) + ")");
     }
-    if (color.a < 0.0f || color.a > 1.0f || color.b < 0.0f || color.b > 1.0f || color.c < 0.0f || color.c > 1.0f) {
+    if (color.a < 0.0 || color.a > 1.0 || color.b < 0.0 || color.b > 1.0 || color.c < 0.0 || color.c > 1.0) {
         throw std::runtime_error("color out of range of [0.0, 1.0)");
     }
     data[IDX(w, x, y, R)] = color.a;

@@ -22,7 +22,8 @@ raytracer: \
 		build/math/ray.o \
 		build/obj/object.o \
 		build/obj/scene.o \
-		build/obj/sphere.o 
+		build/obj/sphere.o \
+		build/obj/material.o
 	mkdir -p build
 	$(CXX) $(CXXFLAGS) -o raytracer \
 		build/main.o \
@@ -36,6 +37,7 @@ raytracer: \
 		build/obj/object.o \
 		build/obj/scene.o \
 		build/obj/sphere.o \
+		build/obj/material.o \
 		$(LDFLAGS)
 
 build/main.o: src/main.cpp src/macros.hpp
@@ -81,6 +83,10 @@ build/obj/scene.o: src/obj/scene.cpp src/obj/scene.hpp src/macros.hpp src/obj/ob
 build/obj/sphere.o: src/obj/sphere.cpp src/obj/sphere.hpp src/macros.hpp src/obj/object.hpp
 	mkdir -p build/obj
 	$(CXX) $(CXXFLAGS) -c src/obj/sphere.cpp -o build/obj/sphere.o
+
+build/obj/material.o: src/obj/material.cpp src/obj/material.hpp src/macros.hpp src/obj/object.hpp
+	mkdir -p build/obj
+	$(CXX) $(CXXFLAGS) -c src/obj/material.cpp -o build/obj/material.o
 
 .PHONY: clean
 clean:

@@ -35,9 +35,9 @@ PNGImage::PNGImage(Image &image) {
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
             data->set_pixel(x, y, png::rgba_pixel(
-                (uint8_t) (image.at(x, y, Channel::R) * 255.999f),
-                (uint8_t) (image.at(x, y, Channel::G) * 255.999f),
-                (uint8_t) (image.at(x, y, Channel::B) * 255.999f),
+                (uint8_t) (image.at(x, y, Channel::R) * 255.999),
+                (uint8_t) (image.at(x, y, Channel::G) * 255.999),
+                (uint8_t) (image.at(x, y, Channel::B) * 255.999),
                 255));
         }
     }
@@ -78,20 +78,20 @@ int PNGImage::height() {
     #endif
 }
 
-float PNGImage::at(int x, int y, Channel channel) {
+double PNGImage::at(int x, int y, Channel channel) {
     #ifdef PNGPP
     if (x >= w || x < 0 || y >= h || y < 0) {
         throw std::runtime_error("coordinate " + std::to_string(x) + "x" + std::to_string(y) + " out of bounds (img " + std::to_string(w) + "x" + std::to_string(h) + ")");
     }
     switch (channel) {
         case R:
-            return data->get_pixel(x, y).red / 255.999f;
+            return data->get_pixel(x, y).red / 255.999;
         case G:
-            return data->get_pixel(x, y).green / 255.999f;
+            return data->get_pixel(x, y).green / 255.999;
         case B:
-            return data->get_pixel(x, y).blue / 255.999f;
+            return data->get_pixel(x, y).blue / 255.999;
         default:
-            return 0.0f; // impossible
+            return 0.0; // impossible
     }
     #else
     (void) x; (void) y; (void) channel;
@@ -99,24 +99,24 @@ float PNGImage::at(int x, int y, Channel channel) {
     #endif
 }
 
-void PNGImage::set(int x, int y, Channel channel, float value) {
+void PNGImage::set(int x, int y, Channel channel, double value) {
     #ifdef PNGPP
     if (x >= w || x < 0 || y >= h || y < 0) {
         throw std::runtime_error("coordinate " + std::to_string(x) + "x" + std::to_string(y) + " out of bounds (img " + std::to_string(w) + "x" + std::to_string(h) + ")");
     }
-    if (value < 0.0f || value > 1.0f) {
+    if (value < 0.0 || value > 1.0) {
         throw std::runtime_error("value " + std::to_string(value) + " out of range of [0.0, 1.0)");
     }
     png::rgba_pixel pixel = data->get_pixel(x, y);
     switch (channel) {
         case R:
-            pixel.red = (uint8_t) (value * 255.999f);
+            pixel.red = (uint8_t) (value * 255.999);
             break;
         case G:
-            pixel.green = (uint8_t) (value * 255.999f);
+            pixel.green = (uint8_t) (value * 255.999);
             break;
         case B:
-            pixel.blue = (uint8_t) (value * 255.999f);
+            pixel.blue = (uint8_t) (value * 255.999);
             break;
     }
     data->set_pixel(x, y, pixel);
@@ -131,13 +131,13 @@ void PNGImage::set(int x, int y, Color color) {
     if (x >= w || x < 0 || y >= h || y < 0) {
         throw std::runtime_error("coordinate " + std::to_string(x) + "x" + std::to_string(y) + " out of bounds (img " + std::to_string(w) + "x" + std::to_string(h) + ")");
     }
-    if (color.a < 0.0f || color.a > 1.0f || color.b < 0.0f || color.b > 1.0f || color.c < 0.0f || color.c > 1.0f) {
+    if (color.a < 0.0 || color.a > 1.0 || color.b < 0.0 || color.b > 1.0 || color.c < 0.0 || color.c > 1.0) {
         throw std::runtime_error("color out of range of [0.0, 1.0)");
     }
     png::rgba_pixel pixel = data->get_pixel(x, y);
-    pixel.red = (uint8_t) (color.a * 255.999f);
-    pixel.green = (uint8_t) (color.b * 255.999f);
-    pixel.blue = (uint8_t) (color.c * 255.999f);
+    pixel.red = (uint8_t) (color.a * 255.999);
+    pixel.green = (uint8_t) (color.b * 255.999);
+    pixel.blue = (uint8_t) (color.c * 255.999);
     data->set_pixel(x, y, pixel);
     #else
     (void) x; (void) y; (void) color;

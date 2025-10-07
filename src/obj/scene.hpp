@@ -15,7 +15,7 @@ class Scene {
         void add(std::shared_ptr<Object> obj);
         void remove(std::shared_ptr<Object> obj);
 
-        bool hit(const Ray &r, const Interval &ray_t, HitResult &result) const;
+        bool hit(const Ray &r, const Interval &ray_t, std::shared_ptr<Object> &res_obj, double &res_t, Vec3 &res_point, Vec3 &res_normal) const;
 };
 
 #endif
