@@ -11,6 +11,8 @@ ifeq ($(LIBPNG_AVAILABLE)$(PNGPP_HEADERS),11)
     LDFLAGS += $(shell pkg-config --libs libpng)
 endif
 
+all: raytracer joiner
+
 raytracer: \
 		build/main.o \
 		build/camera.o \
@@ -39,6 +41,23 @@ raytracer: \
 		build/obj/sphere.o \
 		build/obj/material.o \
 		$(LDFLAGS)
+
+joiner: \
+		build/joiner.o \
+		build/images/ppm.o \
+		build/images/png.o \
+		build/images/image.o
+	mkdir -p build
+	$(CXX) $(CXXFLAGS) -o joiner \
+		build/joiner.o \
+		build/images/ppm.o \
+		build/images/png.o \
+		build/images/image.o \
+		$(LDFLAGS)
+
+build/joiner.o: src/joiner.cpp src/macros.hpp
+	mkdir -p build
+	$(CXX) $(CXXFLAGS) -c src/joiner.cpp -o build/joiner.o
 
 build/main.o: src/main.cpp src/macros.hpp
 	mkdir -p build

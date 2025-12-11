@@ -34,14 +34,18 @@ class Flags {
                 std::string arg = argv[i];
                 if (arg == "-h" || arg == "--help") {
                     std::cerr << "Usage: " << argv[0] << " (-x <width>) (-y <height>) (-a <aspect_ratio>) (filename)\n"
-                        "  -x/--width:          output image width, defaults to " << params.width << "\n"
-                        "  -y/--height:         output image height, defaults to " << params.height << "\n"
-                        "  -a/--aspect-ratio:   output aspect ratio, as a double or ratio (16:9, for example)\n"
-                        "                       optionally specify a width or a height to apply the aspect ratio to\n"
-                        "  -s/--antialias-samples: number of antialiasing samples per pixel\n" <<
-                        "                          defaults to " << params.antialias_samples << "\n"
+                        "  -x/--width:               output image width, defaults to " << params.width << "\n"
+                        "  -y/--height:              output image height, defaults to " << params.height << "\n"
+                        "  -a/--aspect-ratio:        output aspect ratio, as a double or ratio (16:9, for example)\n"
+                        "                            optionally specify a width or a height to apply the aspect ratio to\n"
+                        "  -s/--antialias-samples:   number of antialiasing samples per pixel\n" <<
+                        "                             defaults to " << params.antialias_samples << "\n"
                         "  -d/--max-recursion-depth: maximum recursion depth for one ray\n" <<
-                        "  (filename):          output file, defaults to " DEFAULT_FILE "\n";
+                        "                             defaults to " << params.max_depth << "\n" <<
+                        "  -w/--workers:             number of worker threads, defaults to " << params.workers << "\n"
+                        "  -f/--frac:                renders only a fraction of the image (ie, 1/3, 2/3, and 3/3) for splitting\n"
+                        "                             rendering across multiple machines\n"
+                        "  (filename):               output file, defaults to " DEFAULT_FILE "\n";
                     exit = true;
                     return;
                 } 
@@ -100,6 +104,38 @@ class Flags {
                         throw EXC("-d/--max-recursion-depth requires a depth value");
                     }
                     params.max_depth = std::stoi(argv[++i]);
+                } else if (arg == "-w" || arg == "--workers") {
+                    if (i + 1 >= argc) {
+                        throw EXC("-w/--workers requires a worker count");
+                    }
+                    params.workers = std::stoi(argv[++i]);
+                    if (params.workers <= 0) {
+                        throw EXC("-w/--workers must be > 0");
+                    }
+                } else if (arg == "-f" || arg == "--frac") {
+                    if (i + 1 >= argc) {
+                        throw EXC("-f/--frac requires a fraction value (like 2/3)");
+                    }
+                    std::string frac_s = argv[++i];
+                    size_t slash = frac_s.find("/");
+                    if (slash == std::string::npos) {
+                        throw EXC("-f/--frac arg must be a fraction (like 2/3)");
+                    }
+                    try {
+                        params.frac_i = std::stoi(frac_s.substr(0, slash));
+                        params.frac_denom = std::stoi(frac_s.substr(slash + 1));
+                        params.frac = true;
+                    }
+                    catch (const std::invalid_argument &e) {
+                        throw EXC("-f/--frac fraction parts must be ints");
+                    }
+                    if (params.frac_i == 0 || params.frac_i > params.frac_denom) {
+                        throw EXC("-f/--frac numerator out of bounds (1-indexed)");
+                    }
+                } else if (arg == "-j" || arg == "--join") {
+                    // joining handled elsewhere
+                    exit = true;
+                    return;
                 } else {
                     if (file_seen) {
                         throw EXC("only one output file allowed");
@@ -147,12 +183,19 @@ std::string duration_str(std::chrono::seconds duration) {
     return res;
 }
 
-void progress(int x, int y, CameraParams params, std::chrono::system_clock::time_point start) {
+void progress(int x, int y, CameraParams &params, std::chrono::system_clock::time_point start) {
     if (x != 0) return;
     
     std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+
+    int real_y = y;
+    int real_h = params.height;
+    if (params.frac) {
+        real_h = params.height / params.frac_denom;
+        real_y -= (params.frac_i - 1) * real_h;
+    }
     
-    double prop = (double) (y * params.width + x) / (params.width * params.height);
+    double prop = (double) (real_y * params.width + x) / (params.width * real_h);
 
     std::string est = "";
     if (prop > 0.05 && prop < 0.999) {
@@ -180,10 +223,23 @@ void run(int argc, char *argv[]) {
     Scene scene;
     scene.add(std::make_shared<Sphere>(Vec3(0.0, -100.5, -1.0), 100.0, std::make_shared<Diffuse>(Color(0.8, 0.8, 0.0))));
     scene.add(std::make_shared<Sphere>(Vec3(0.0, 0.0, -1.2), 0.5, std::make_shared<Diffuse>(Color(0.1, 0.2, 0.5))));
-    scene.add(std::make_shared<Sphere>(Vec3(-1.0, 0.0, -1.0), 0.5, std::make_shared<Metal>(Color(0.8, 0.8, 0.8))));
-    scene.add(std::make_shared<Sphere>(Vec3(1.0, 0.0, -1.0), 0.5, std::make_shared<Metal>(Color(0.8, 0.6, 0.2))));
+    scene.add(std::make_shared<Sphere>(Vec3(-1.0, 0.0, -1.0), 0.5, std::make_shared<Metal>(Color(0.8, 0.8, 0.8), 0.3)));
+    scene.add(std::make_shared<Sphere>(Vec3(1.0, 0.0, -1.0), 0.5, std::make_shared<Metal>(Color(0.8, 0.6, 0.2), 1.0)));
 
-    flags.params.progress = [flags, start](int x, int y) {
+    std::cout << "Render options:\n"
+        << "  Output: " << flags.file << "\n"
+        << "  Size: " << flags.params.width << "x" << flags.params.height << "\n"
+        << "  Antialias samples: " << flags.params.antialias_samples << "\n"
+        << "  Max recursion depth: " << flags.params.max_depth << "\n"
+        << "  Scene: " << scene.size() << " objects\n"
+        << "  Workers: " << flags.params.workers << "\n"
+        << "  Fractional render: " << (flags.params.frac ? "yes" : "no") << "\n";
+
+    if (flags.params.frac) {
+        std::cout << "    Part " << flags.params.frac_i << "/" << flags.params.frac_denom << "\n";
+    }
+
+    flags.params.progress = [&flags, start](int x, int y) {
         progress(x, y, flags.params, start);
     };
     Camera camera(flags.params);
@@ -192,7 +248,7 @@ void run(int argc, char *argv[]) {
     std::shared_ptr<Image> image = camera.image();
     CLOG("Writing " << flags.file << "...");
     Image::write_any(*image, flags.file);
-    CLOG("File written to " << flags.file << ".");
+    CLOG("File written to " << flags.file << ". Took: " << duration_str(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - start)) << "");
     std::cout << std::endl;
 }
 

@@ -23,9 +23,10 @@ class Diffuse : public Material {
 class Metal : public Material {
     private:
         Color albedo;
+        double fuzz;
 
     public:
-        Metal(const Color albedo) : albedo(albedo) {}
+        Metal(const Color albedo, double fuzz) : albedo(albedo), fuzz(fuzz) {}
 
         bool scatter(const Ray &r_in, const Vec3 &normal, const Vec3 &point, Color &attenuation, Ray &scattered) const override;
 };

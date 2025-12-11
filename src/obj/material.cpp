@@ -13,8 +13,8 @@ bool Diffuse::scatter(const Ray &r_in, const Vec3 &normal, const Vec3 &point, Co
 }
 
 bool Metal::scatter(const Ray &r_in, const Vec3 &normal, const Vec3 &point, Color &attenuation, Ray &scattered) const {
-    Vec3 reflected = REFLECT(r_in.get_direction(), normal);
+    Vec3 reflected = REFLECT(r_in.get_direction(), normal).to_unit() + (fuzz * Vec3::random_unit());
     scattered = Ray(point, reflected);
     attenuation = albedo;
-    return true;
+    return (reflected * normal) > 0;
 }

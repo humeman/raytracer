@@ -24,6 +24,7 @@ class PNGImage : public Image {
         int width() override;
         int height() override;
         double at(int x, int y, Channel channel) override;
+        Color at(int x, int y) override;
         void set(int x, int y, Channel channel, double value) override;
         void set(int x, int y, Color color) override;
 };

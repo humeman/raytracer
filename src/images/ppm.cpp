@@ -111,6 +111,18 @@ double PPMImage::at(int x, int y, Channel channel) {
     return data[IDX(w, x, y, channel)];
 }
 
+Color PPMImage::at(int x, int y) {
+    if (x >= w || x < 0 || y >= h || y < 0) {
+        throw std::runtime_error("coordinate " + std::to_string(x) + "x" + std::to_string(y) + " out of bounds (img " + std::to_string(w) + "x" + std::to_string(h) + ")");
+    }
+    return Color(
+        data[IDX(w, x, y, Channel::R)],
+        data[IDX(w, x, y, Channel::G)],
+        data[IDX(w, x, y, Channel::B)]
+    );
+}
+
+
 void PPMImage::set(int x, int y, Channel channel, double value) {
     if (x >= w || x < 0 || y >= h || y < 0) {
         throw std::runtime_error("coordinate " + std::to_string(x) + "x" + std::to_string(y) + " out of bounds (img " + std::to_string(w) + "x" + std::to_string(h) + ")");

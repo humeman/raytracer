@@ -29,3 +29,7 @@ bool Scene::hit(const Ray &r, const Interval &ray_t, std::shared_ptr<Object> &re
     }
     return found;
 }
+
+int Scene::size() {
+    return objects.size();
+}

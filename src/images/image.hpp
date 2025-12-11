@@ -46,6 +46,14 @@ class Image {
         virtual double at(int x, int y, Channel channel) = 0;
 
         /**
+         * Gets the color of a pixel at a given coordinate
+         * @param x
+         * @param y
+         * @return color there
+         */
+        virtual Color at(int x, int y) = 0;
+
+        /**
          * Sets the value of a pixel
          * @param x
          * @param y

@@ -29,8 +29,7 @@ double Interval::random() {
     if (distribution == nullptr) {
         throw EXC("can't use random() with an empty interval");
     }
-    double rand = (*distribution)(generator);
-    return min + (max - min) * rand;
+    return (*distribution)(generator);
 }
 
 Interval Interval::empty = Interval();

@@ -99,6 +99,23 @@ double PNGImage::at(int x, int y, Channel channel) {
     #endif
 }
 
+Color PNGImage::at(int x, int y) {
+    #ifdef PNGPP
+    if (x >= w || x < 0 || y >= h || y < 0) {
+        throw std::runtime_error("coordinate " + std::to_string(x) + "x" + std::to_string(y) + " out of bounds (img " + std::to_string(w) + "x" + std::to_string(h) + ")");
+    }
+    return Color(
+        data->get_pixel(x, y).red / 255.999,
+        data->get_pixel(x, y).green / 255.999,
+        data->get_pixel(x, y).blue / 255.999
+    );
+    #else
+    (void) x; (void) y; (void) channel;
+    throw MISSING_PNGPP_ERR;
+    #endif
+
+}
+
 void PNGImage::set(int x, int y, Channel channel, double value) {
     #ifdef PNGPP
     if (x >= w || x < 0 || y >= h || y < 0) {
