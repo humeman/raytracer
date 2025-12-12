@@ -3,6 +3,7 @@
 
 #include <string>
 #include <cstdint>
+#include <memory>
 #include <math/vec3.hpp>
 
 enum Channel {
@@ -70,8 +71,8 @@ class Image {
          */
         virtual void set(int x, int y, Color color) = 0;
 
-        static void write_any(Image &image, std::string path);
-        static Image *read_any(std::string path);
+        static void write_any(std::shared_ptr<Image> image, std::string path);
+        static std::shared_ptr<Image> read_any(std::string path);
 };
 
 #endif
