@@ -45,6 +45,7 @@ class Camera {
         int last_row = 0;
         int active_workers = 0;
         CameraParams params;
+        int frac_y_offset = 0;
 
         Vec3 center;
         Vec3 pixel00;

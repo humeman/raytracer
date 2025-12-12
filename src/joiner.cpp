@@ -1,5 +1,5 @@
 #include <images/image.hpp>
-#include <images/png.hpp>
+#include <images/ppm.hpp>
 
 #include <iostream>
 #include <memory>
@@ -10,14 +10,14 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    std::vector<Image *> source;
+    std::vector<std::shared_ptr<Image>> source;
     for (int i = 1; i < argc - 1; i++) {
         source.push_back(Image::read_any(argv[i]));
     }
 
     int width = source[0]->width();
     int height = 0;
-    for (auto *img : source) {
+    for (auto img : source) {
         if (img->width() != width) {
             std::cerr << "mismatched image widths" << std::endl;
             return 1;
@@ -25,10 +25,10 @@ int main(int argc, char *argv[]) {
         height += img->height();
     }
 
-    PNGImage *dest = new PNGImage(width, height);
+    auto dest = std::make_shared<PPMImage>(width, height);
 
     int y_offset = 0;
-    for (auto *img : source) {
+    for (auto img : source) {
         int w = img->width();
         int h = img->height();
 
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
         y_offset += h;
     }
 
-    Image::write_any(*dest, argv[argc - 1]);
+    Image::write_any(dest, argv[argc - 1]);
 
     std::cout << "wrote " << width << "x" << height << " image to " << argv[argc - 1] << std::endl;
     return 0;

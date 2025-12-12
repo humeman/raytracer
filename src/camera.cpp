@@ -7,7 +7,15 @@
 Camera::Camera(const CameraParams &params) {
     this->params = params;
     
-    this->img = std::make_shared<PPMImage>(params.width, params.height);
+    int h = params.height;
+
+    if (params.frac) {
+        h = params.height / params.frac_denom;
+        if (params.frac_i == params.frac_denom) {
+            h = params.height - (params.frac_i - 1) * h;
+        }
+    }
+    this->img = std::make_shared<PPMImage>(params.width, h);
     center = Vec3(0.0, 0.0, 0.0);
 
     double viewport_width = params.viewport_height * ((double) params.width) / params.height;
@@ -74,17 +82,16 @@ int Camera::current_row() {
 
 void Camera::render(const Scene &scene) {
     // prepare a queue with the rows to render
-    int min_y = 0;
-    int max_y = img->height();
+    int max_y = params.height;
 
     if (params.frac) {
         int frac_h = params.height / params.frac_denom;
-        min_y = (params.frac_i - 1) * frac_h;
+        frac_y_offset = (params.frac_i - 1) * frac_h;
         if (params.frac_i != params.frac_denom)
-            max_y = min_y + frac_h;
+            max_y = frac_y_offset + frac_h;
     }
 
-    for (int y = min_y; y < max_y; y++) {
+    for (int y = frac_y_offset; y < max_y; y++) {
         rows.push(y);
     }
 
@@ -131,7 +138,7 @@ void Camera::render_row(const Scene &scene, int y) {
         col.a = LINEAR_TO_GAMMA(col.a);
         col.b = LINEAR_TO_GAMMA(col.b);
         col.c = LINEAR_TO_GAMMA(col.c);
-        img->set(x, y, col);
+        img->set(x, y - frac_y_offset, col);
     }
 }
 

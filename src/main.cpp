@@ -255,7 +255,7 @@ void run(int argc, char *argv[]) {
 
     std::shared_ptr<Image> image = camera.image();
     CLOG("Writing " << flags.file << "...");
-    Image::write_any(*image, flags.file);
+    Image::write_any(image, flags.file);
     CLOG("File written to " << flags.file << ". Took: " << duration_str(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - start)) << "");
     std::cout << std::endl;
 }
