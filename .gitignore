@@ -4,3 +4,4 @@ raytracer
 *.png
 .vscode
 build
+joiner

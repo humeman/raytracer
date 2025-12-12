@@ -226,6 +226,14 @@ void run(int argc, char *argv[]) {
     scene.add(std::make_shared<Sphere>(Vec3(-1.0, 0.0, -1.0), 0.5, std::make_shared<Metal>(Color(0.8, 0.8, 0.8), 0.3)));
     scene.add(std::make_shared<Sphere>(Vec3(1.0, 0.0, -1.0), 0.5, std::make_shared<Metal>(Color(0.8, 0.6, 0.2), 1.0)));
 
+    // Give this warning before rendering finishes
+    #ifndef PNGPP
+    if (flags.file.substr(flags.file.length() - 4) == ".png") {
+        std::cerr << "error: install PNG++ and rebuild for PNG support, or use ppms\n";
+        return;
+    }
+    #endif
+
     std::cout << "Render options:\n"
         << "  Output: " << flags.file << "\n"
         << "  Size: " << flags.params.width << "x" << flags.params.height << "\n"

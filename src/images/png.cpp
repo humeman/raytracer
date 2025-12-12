@@ -110,7 +110,7 @@ Color PNGImage::at(int x, int y) {
         data->get_pixel(x, y).blue / 255.999
     );
     #else
-    (void) x; (void) y; (void) channel;
+    (void) x; (void) y;
     throw MISSING_PNGPP_ERR;
     #endif
 
