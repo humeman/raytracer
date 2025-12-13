@@ -1,8 +1,11 @@
 #include <camera.hpp>
 #include <macros.hpp>
 
+#include <cmath>
 #include <iostream>
 #include <thread>
+#include <mutex>
+#include <numbers>
 
 Camera::Camera(const CameraParams &params) {
     this->params = params;
@@ -16,45 +19,63 @@ Camera::Camera(const CameraParams &params) {
         }
     }
     this->img = std::make_shared<PPMImage>(params.width, h);
-    center = Vec3(0.0, 0.0, 0.0);
+    center = params.look_from;
 
-    double viewport_width = params.viewport_height * ((double) params.width) / params.height;
-    Vec3 viewport_u(viewport_width, 0.0, 0.0);
-    Vec3 viewport_v(0.0, -params.viewport_height, 0.0);
+    double viewport_height = 2 * std::tan(DEG_TO_RAD(params.fov) / 2) * params.focus_distance;
+    double viewport_width = viewport_height * ((double) params.width) / params.height;
+    Vec3 w = (params.look_from - params.look_at).to_unit();
+    Vec3 u = (params.vup ^ w).to_unit();
+    Vec3 v = w ^ u;
+    Vec3 viewport_u = viewport_width * u;
+    Vec3 viewport_v = viewport_height * -v;
     pixel_delta_u = viewport_u / (double) params.width;
     pixel_delta_v = viewport_v / (double) params.height;
 
-    Vec3 upper_left = center - Vec3(0, 0, params.focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+    Vec3 upper_left = center - (params.focus_distance * w) - viewport_u / 2.0 - viewport_v / 2.0;
     pixel00 = upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+
+    double defocus_rad = params.focus_distance * std::tan(DEG_TO_RAD(params.defocus_angle / 2));
+    defocus_disk_u = u * defocus_rad;
+    defocus_disk_v = v * defocus_rad;
 }
 
-Color Camera::color(const Scene &scene, const Ray &ray) const {
-    return color(scene, ray, 0);
+Color Camera::color(const Scene &scene, const std::vector<std::shared_ptr<Object>> &lights, const Ray &ray, int x, int y) const {
+    return color(scene, lights, ray, 0, x, y);
 }
 
 Interval HIT_INTERVAL(0.001, DOUBLE_INFINITY);
-Color SKY_GRADIENT_BOTTOM(0.5, 0.7, 1.0);
 
-Color Camera::color(const Scene &scene, const Ray &ray, int depth) const {
+Color Camera::color(const Scene &scene, const std::vector<std::shared_ptr<Object>> &lights, const Ray &ray, int depth, int x, int y) const {
     if (depth >= params.max_depth) {
         return Color::black;
     }
-    double t;
-    Vec3 point, normal;
-    std::shared_ptr<Object> obj;
-    if (scene.hit(ray, HIT_INTERVAL, obj, t, point, normal)) {
-        Ray scattered;
-        Color attenuation;
-        if (obj->material->scatter(ray, normal, point, attenuation, scattered)) {
-            attenuation *= color(scene, scattered, depth + 1);
-            return attenuation;
-        }
-        return Color::black;
+    HitResult res;
+    if (!scene.hit(ray, HIT_INTERVAL, res)) {
+        double u = (double) x / params.width;
+        double v = (double) y / params.height;
+        return params.background->value(u, v, ray.at(1.0));
+    }
+    ScatterResult scatter_res;
+    Color emitted = res.material->emit(res.u, res.v, res.point);
+    if (!res.material->scatter(ray, res, scatter_res)) {
+        return emitted;
     }
 
-    Vec3 unit_direction = ray.get_direction().to_unit();
-    double a = 0.5 * (unit_direction.b + 1.0);
-    return (1.0 - a) * Color::white + a * SKY_GRADIENT_BOTTOM;
+    if (scatter_res.pdf == nullptr) {
+        return scatter_res.attenuation % color(scene, lights, scatter_res.scattered, depth + 1, x, y);
+    }
+
+    std::shared_ptr<PDF> pdf = std::make_shared<MixPDF>(
+        std::make_shared<ObjectListPDF>(lights, res.point),
+        scatter_res.pdf
+    );
+
+    Ray scattered = Ray(res.point, pdf->generate(), ray.get_time());
+    double pdf_val = pdf->value(scattered.get_direction());
+    double scattering_pdf = res.material->scattering_pdf(ray, res, scattered);
+    Color sample = color(scene, lights, scattered, depth + 1, x, y);
+    Color col_scatter = (scatter_res.attenuation * scattering_pdf % sample) / pdf_val;
+    return emitted + col_scatter;
 }
 
 Interval ANTIALIAS_OFFSET_INTERVAL(-0.5, 0.5);
@@ -62,7 +83,14 @@ Interval ANTIALIAS_OFFSET_INTERVAL(-0.5, 0.5);
 Ray Camera::ray(int x, int y) const {
     Vec3 offset(ANTIALIAS_OFFSET_INTERVAL.random(), ANTIALIAS_OFFSET_INTERVAL.random(), 0.0);
     Vec3 sample = pixel00 + ((double) x + offset.a) * pixel_delta_u + ((double) y + offset.b) * pixel_delta_v;
-    return Ray(center, sample - center);
+    Vec3 origin;
+    if (params.defocus_angle > 0.0) {
+        Vec3 rand = Vec3::random_in_unit_disk();
+        origin = center + rand.a * defocus_disk_u + rand.b * defocus_disk_v;
+    } else {
+        origin = center;
+    }
+    return Ray(origin, sample - origin, RAND_DOUBLE());
 }
 
 const Interval INTENSITY_RANGE(0, 0.999);
@@ -80,7 +108,7 @@ int Camera::current_row() {
     return last_row;
 }
 
-void Camera::render(const Scene &scene) {
+void Camera::render(const Scene &scene, std::vector<std::shared_ptr<Object>> &lights) {
     // prepare a queue with the rows to render
     int max_y = params.height;
 
@@ -98,7 +126,7 @@ void Camera::render(const Scene &scene) {
     // spin up some threads to process these
     active_workers = params.workers;
     for (int i = 0; i < params.workers; i++) {
-        std::thread worker(&Camera::threaded_processor, this, std::ref(scene));
+        std::thread worker(&Camera::threaded_processor, this, std::ref(scene), std::ref(lights));
         worker.detach();
     }
 
@@ -113,25 +141,61 @@ void Camera::render(const Scene &scene) {
     }
 }
 
-void Camera::threaded_processor(const Scene &scene) {
+void Camera::threaded_processor(const Scene &scene, const std::vector<std::shared_ptr<Object>> &lights) {
     int y;
     while ((y = next_row()) >= 0) {
-        render_row(scene, y);
+        render_row(scene, lights, y);
     }
     std::lock_guard<std::mutex> guard(count_lock);
     active_workers--;
 }
 
-void Camera::render_row(const Scene &scene, int y) {
+void Camera::render_row(const Scene &scene, const std::vector<std::shared_ptr<Object>> &lights, int y) {
     for (int x = 0; x < img->width(); x++) {
         if (params.progress) params.progress(x, y);
         Ray r;
-        Color col;
-        for (int s = 0; s < params.antialias_samples; s++) {
-            r = ray(x, y);
-            col += color(scene, r);
+        Color col = Color(0, 0, 0);
+        if (params.adaptive_sampling) {
+            Color sum_sq = Color(0, 0, 0);
+            int s;
+            for (s = 0; s < params.antialias_samples; s++) {
+                r = ray(x, y);
+                Color c = color(scene, lights, r, x, y);
+                col += c;
+                sum_sq += c % c;
+                
+                if (s > 0 && s % params.adaptive_sampling_interval == 0) {
+                    double s_double = (double)s;
+                    Vec3 mean = col / s_double;
+                    Vec3 var_sq = (sum_sq / s_double) - (mean % mean);
+                    double n_sqrt = std::sqrt(s);
+                    Vec3 confidence(
+                        AS_CONFIDENCE_Z * std::sqrt(var_sq.a) / n_sqrt,
+                        AS_CONFIDENCE_Z * std::sqrt(var_sq.b) / n_sqrt,
+                        AS_CONFIDENCE_Z * std::sqrt(var_sq.c) / n_sqrt
+                    );
+                    if (
+                        confidence.a <= (params.adaptive_sampling_threshold * mean.a)
+                        && confidence.b <= (params.adaptive_sampling_threshold * mean.b)
+                        && confidence.c <= (params.adaptive_sampling_threshold * mean.c)
+                    ) {
+                        break;
+                    }
+                }
+            }
+            {
+                std::lock_guard<std::mutex> guard(as_count_lock);
+                as_sample_count += s;
+            }
+            col /= (s + 1.0);
+        } else {
+            for (int s = 0; s < params.antialias_samples; s++) {
+                r = ray(x, y);
+                col += color(scene, lights, r, x, y);
+            }
+
+            col /= (double) params.antialias_samples;
         }
-        col /= (double) params.antialias_samples;
         col.a = INTENSITY_RANGE.clamp(col.a);
         col.b = INTENSITY_RANGE.clamp(col.b);
         col.c = INTENSITY_RANGE.clamp(col.c);

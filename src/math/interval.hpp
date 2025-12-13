@@ -9,11 +9,12 @@ class Interval {
         std::mt19937 generator;
 
     public:
-        const double min;
-        const double max;
+        double min;
+        double max;
 
         Interval();
         Interval(double min, double max);
+        Interval(const Interval &a, const Interval &b);
         ~Interval();
 
         double size() const;
@@ -21,8 +22,9 @@ class Interval {
         bool surrounds(double x) const;
         double clamp(double in) const;
         double random();
+        Interval grow(double amount) const;
 
-        static Interval empty, universe;
+        static Interval empty, universe, epsilon, one;
 };
 
 #endif

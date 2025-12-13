@@ -2,8 +2,14 @@
 #include <images/ppm.hpp>
 #include <math/vec3.hpp>
 #include <obj/sphere.hpp>
+#include <obj/triangle.hpp>
+#include <obj/quad.hpp>
 #include <obj/material.hpp>
+#include <obj/model.hpp>
 #include <obj/scene.hpp>
+#include <obj/bvh.hpp>
+#include <obj/texture.hpp>
+#include <obj/cdm.hpp>
 #include <macros.hpp>
 #include <camera.hpp>
 
@@ -38,8 +44,12 @@ class Flags {
                         "  -y/--height:              output image height, defaults to " << params.height << "\n"
                         "  -a/--aspect-ratio:        output aspect ratio, as a double or ratio (16:9, for example)\n"
                         "                            optionally specify a width or a height to apply the aspect ratio to\n"
+                        "  -F/--fov:                 field of view in degrees, defaults to " << params.fov << "\n"
                         "  -s/--antialias-samples:   number of antialiasing samples per pixel\n" <<
                         "                             defaults to " << params.antialias_samples << "\n"
+                        "  -A/--adaptive-sampling:   enables adaptive sampling\n" <<
+                        "  -t/--as-tolerance:        tolerance level (smaller means higher quality) of adaptive sampling\n" <<
+                        "                             checks. defaults to " << params.adaptive_sampling_threshold << "\n"
                         "  -d/--max-recursion-depth: maximum recursion depth for one ray\n" <<
                         "                             defaults to " << params.max_depth << "\n" <<
                         "  -w/--workers:             number of worker threads, defaults to " << params.workers << "\n"
@@ -94,11 +104,26 @@ class Flags {
                     if (aspect_ratio <= 0.0) {
                         throw EXC("-a/--aspect-ratio must be > 0");
                     }
+                } else if (arg == "-F" || arg == "--fov") {
+                    if (i + 1 >= argc) {
+                        throw EXC("-F/--fov requires a degree value");
+                    }
+                    params.fov = std::stoi(argv[++i]);
+                    if (params.fov < 1 || params.fov >= 180) {
+                        throw EXC("-F--fov must be >= 1 and < 180");
+                    }
                 } else if (arg == "-s" || arg == "--antialias-samples") {
                     if (i + 1 >= argc) {
                         throw EXC("-s/--antialias-samples requires a sample count");
                     }
                     params.antialias_samples = std::stoi(argv[++i]);
+                } else if (arg == "-A" || arg == "--adaptive-sampling") {
+                    params.adaptive_sampling = true;
+                } else if (arg == "-t" || arg == "--as-threshold") {
+                    if (i + 1 >= argc) {
+                        throw EXC("-t/--as-threshold requires a float arg");
+                    }
+                    params.adaptive_sampling_threshold = std::stod(argv[++i]);
                 } else if (arg == "-d" || arg == "--max-recursion-depth") {
                     if (i + 1 >= argc) {
                         throw EXC("-d/--max-recursion-depth requires a depth value");
@@ -132,10 +157,6 @@ class Flags {
                     if (params.frac_i == 0 || params.frac_i > params.frac_denom) {
                         throw EXC("-f/--frac numerator out of bounds (1-indexed)");
                     }
-                } else if (arg == "-j" || arg == "--join") {
-                    // joining handled elsewhere
-                    exit = true;
-                    return;
                 } else {
                     if (file_seen) {
                         throw EXC("only one output file allowed");
@@ -221,10 +242,45 @@ void run(int argc, char *argv[]) {
     auto start = std::chrono::system_clock::now();
 
     Scene scene;
-    scene.add(std::make_shared<Sphere>(Vec3(0.0, -100.5, -1.0), 100.0, std::make_shared<Diffuse>(Color(0.8, 0.8, 0.0))));
-    scene.add(std::make_shared<Sphere>(Vec3(0.0, 0.0, -1.2), 0.5, std::make_shared<Diffuse>(Color(0.1, 0.2, 0.5))));
-    scene.add(std::make_shared<Sphere>(Vec3(-1.0, 0.0, -1.0), 0.5, std::make_shared<Metal>(Color(0.8, 0.8, 0.8), 0.3)));
-    scene.add(std::make_shared<Sphere>(Vec3(1.0, 0.0, -1.0), 0.5, std::make_shared<Metal>(Color(0.8, 0.6, 0.2), 1.0)));
+    std::vector<std::shared_ptr<Object>> lights;
+    scene.add(std::make_shared<Sphere>(Vec3(0.0, -100.5, -1.0), 100.0, std::make_shared<Diffuse>(std::make_shared<ColorTexture>(0.8, 0.8, 0.0))));
+    // scene.add(std::make_shared<Sphere>(Vec3(0.0, 0.0, -1.2), Vec3(0.0, 0.2, -1.2),0.5, std::make_shared<Diffuse>(std::make_shared<ColorTexture>(0.1, 0.2, 0.5))));
+    // scene.add(std::make_shared<Sphere>(Vec3(-1.0, 0.0, -1.0), 0.5, std::make_shared<Dielectric>(1.5)));
+    // scene.add(std::make_shared<Sphere>(Vec3(-1.0, 0.0, -1.0), 0.4, std::make_shared<Dielectric>(1.0 / 1.5)));
+    // scene.add(std::make_shared<Sphere>(Vec3(1.0, 0.0, -1.0), 0.5, std::make_shared<Diffuse>(std::make_shared<ColorTexture>(1.0, 0.0, 0.0))));
+    auto andres = Image::read_any("assets/andres.png");
+    auto texture = std::make_shared<ImageTexture>(andres);
+    auto light = std::make_shared<Quad>(Vec3(2.0, 0.1, 2.0), Vec3(0, 0.1, -2.0), Vec3(-2.0, 0.1, 0), std::make_shared<DiffuseLight>(std::make_shared<ColorTexture>(4, 4, 4)));
+    scene.add(light);
+    lights.push_back(light);
+    scene.add(std::make_shared<CDM>(
+        std::make_shared<Sphere>(
+            Vec3(1, 0.5, 1), 
+            2, 
+            std::make_shared<Isotropic>(
+                std::make_shared<ColorTexture>(1.0, 0.7, 0.3)
+            )),
+        0.7
+    ));
+
+    ModelLoader loader(scene);
+    loader.load(
+        "assets/chair.glb",
+        Vec3(0, 0, 0),
+        4
+    );
+    // scene.add(std::make_shared<Sphere>(Vec3(-2.0, 0.7, -3), 2, std::make_shared<Diffuse>(texture)));
+    // scene.add(std::make_shared<Triangle>(Vec3(-1.0, 0.0, -2.0), Vec3(1.0, 0.0, 1.0), Vec3(2.0, 0.0, -1.0), Vec3(0.25, 0.5, 0), Vec3(0.25, 0.75, 0), Vec3(0.75, 0.75, 0), std::make_shared<Diffuse>(texture)));
+    // scene.add(std::make_shared<Quad>(Vec3(1.0, 1.0, 0), Vec3(1, 0, 0), Vec3(0, 1, 0), std::make_shared<Diffuse>(texture)));
+
+    int count = scene.size();
+    scene = Scene(std::make_shared<BVHNode>(scene));
+    
+    // flags.params.background = std::make_shared<ColorTexture>(0.2f, 0.7f, 0.2f);
+    flags.params.look_from = Vec3(3.0, 3.0, 3.0);
+    flags.params.look_at = Vec3(0.0, 0.0, 0.0);
+    flags.params.vup = Vec3(0.0, 1.0, 0.0);
+    flags.params.fov = 65;
 
     // Give this warning before rendering finishes
     #ifndef PNGPP
@@ -238,8 +294,12 @@ void run(int argc, char *argv[]) {
         << "  Output: " << flags.file << "\n"
         << "  Size: " << flags.params.width << "x" << flags.params.height << "\n"
         << "  Antialias samples: " << flags.params.antialias_samples << "\n"
+        << "  Adaptive sampling: " << (
+            flags.params.adaptive_sampling ? 
+                ("yes (t=" + std::to_string(flags.params.adaptive_sampling_threshold) + ")") 
+                : "no") << "\n"
         << "  Max recursion depth: " << flags.params.max_depth << "\n"
-        << "  Scene: " << scene.size() << " objects\n"
+        << "  Scene: " << count << " objects\n"
         << "  Workers: " << flags.params.workers << "\n"
         << "  Fractional render: " << (flags.params.frac ? "yes" : "no") << "\n";
 
@@ -251,13 +311,16 @@ void run(int argc, char *argv[]) {
         progress(x, y, flags.params, start);
     };
     Camera camera(flags.params);
-    camera.render(scene);
+    camera.render(scene, lights);
 
     std::shared_ptr<Image> image = camera.image();
     CLOG("Writing " << flags.file << "...");
     Image::write_any(image, flags.file);
     CLOG("File written to " << flags.file << ". Took: " << duration_str(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - start)) << "");
     std::cout << std::endl;
+    if (flags.params.adaptive_sampling) {
+        std::cout << "Average adaptive samples: " << camera.as_sample_count / (flags.params.width * flags.params.height) << " per pixel" << std::endl;
+    }
 }
 
 int main(int argc, char *argv[]) {

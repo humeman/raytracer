@@ -7,7 +7,10 @@
 #include <random>
 
 #define CLAMP(x, low, high) ((x < low) ? low : ((x > high) ? high : x))
-#define DOUBLE_EQ(a, b) (std::fabs((a) - (b)) < 0.000005)
+#define EPSILON 0.000001
+#define DOUBLE_EQ(a, b) (std::fabs((a) - (b)) < EPSILON)
+#define PAD_DELTA 0.0001
+
 
 // https://www.youtube.com/watch?v=dXqtrHJAqVM
 #define CLOG(x) std::clog << "\33[2K\r" << x << " " << std::flush;
@@ -46,8 +49,13 @@ class TracerException : public std::exception {
 #define DEG_TO_RAD(x) ((x) * std::numbers::pi / 180.0)
 #define RAD_TO_DEG(x) ((x) * 180.0 / std::numbers::pi)
 #define ON_HEMISPHERE(normal, vector) (((normal) * (vector)) > 0.0 ? (vector) : (vector * -1.0))
-#define REFLECT(v, n) ((v) - 2 * ((v) * (n)) * (n))
 
 #define LINEAR_TO_GAMMA(x) ((x) > 0 ? std::sqrt(x) : 0)
+
+#define RAND_DOUBLE() (std::rand() / (RAND_MAX + 1.0))
+#define RAND_DOUBLE_RANGE(min, max) (min + (max - min) * RAND_DOUBLE())
+#define RAND_INT_RANGE(min, max) ((int) RAND_DOUBLE_RANGE(min, max + 1))
+
+#define AS_CONFIDENCE_Z 1.96
 
 #endif

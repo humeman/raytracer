@@ -5,11 +5,17 @@ Interval::Interval() : min(DOUBLE_INFINITY), max(-DOUBLE_INFINITY) {
     distribution = nullptr;
 }
 Interval::Interval(double min, double max) : min(min), max(max) {
-    distribution = new std::uniform_real_distribution<double>(min, max);
+    distribution = nullptr;
+}
+Interval::Interval(const Interval &a, const Interval &b) {
+    min = a.min <= b.min ? a.min : b.min;
+    max = a.max >= b.max ? a.max : b.max;
+    distribution = nullptr;
 }
 Interval::~Interval() {
     if (distribution != nullptr) {
         delete distribution;
+        distribution = nullptr;
     }
 }
 
@@ -27,10 +33,19 @@ double Interval::clamp(double in) const {
 }
 double Interval::random() {
     if (distribution == nullptr) {
-        throw EXC("can't use random() with an empty interval");
+        distribution = new std::uniform_real_distribution<double>(min, max);
     }
     return (*distribution)(generator);
+}
+Interval Interval::grow(double amount) const {
+    double per = amount / 2;
+    return Interval(
+        min - per,
+        max + per
+    );
 }
 
 Interval Interval::empty = Interval();
 Interval Interval::universe = Interval(-DOUBLE_INFINITY, DOUBLE_INFINITY);
+Interval Interval::epsilon = Interval(-EPSILON, EPSILON);
+Interval Interval::one = Interval(0, 1);

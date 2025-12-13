@@ -15,8 +15,8 @@ make
 
 ### dependencies
 - `pkg-config` must be installed to detect libraries
-- `libpng++` can be installed to add PNG support
-  - if not detected when building, the raytracer will only support PPMs
+- `libpng` and `libpng++` can be installed to add PNG support
+  - if both aren't detected when building, the raytracer will only support PPMs
 - `g++`
   
 ### other make targets
@@ -51,3 +51,13 @@ make
 - `(filename)`: change output file
   - `.ppm` and `.png` are supported
   - default `out.png`
+
+## citations
+### code
+
+- [Adaptive Sampling](https://cs184.eecs.berkeley.edu/sp21/docs/proj3-1-part-5) from Berkeley CS184/284A
+
+### scene
+I haven't bundled any of these here, to render you'll have to download them
+and write them with the names noted into `assets/`.
+- `chair.glb`: [Executive Chair](https://poly.pizza/m/hW11P9DDXa) by Zsky [CC-BY](https://creativecommons.org/licenses/by/3.0/) via Poly Pizza
