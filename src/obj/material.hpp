@@ -49,7 +49,7 @@ class Diffuse : public Material {
 
 class Metal : public Material {
     private:
-    std::shared_ptr<Texture> texture;
+        std::shared_ptr<Texture> texture;
         double fuzz;
 
     public:

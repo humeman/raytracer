@@ -2,11 +2,12 @@
 
 A ray tracer written in C++.
 
----
+[View summary report](report.pdf)
 
-## features
-- PPM and PNG reading/writing
-- Spheres
+![main scene](final.png)
+<sup>It's never lupus.</sup>
+
+---
 
 ## build
 ```
@@ -17,6 +18,8 @@ make
 - `pkg-config` must be installed to detect libraries
 - `libpng` and `libpng++` can be installed to add PNG support
   - if both aren't detected when building, the raytracer will only support PPMs
+- `libassimp` can be installed to add model rendering support
+  - if not detected when building, scenes will skip loading model files
 - `g++`
   
 ### other make targets
@@ -37,10 +40,12 @@ make
 - `-a/--aspect-ratio (ratio)`: change resulting aspect ratio
   - if specified, you can also optionally provide either `-x/--width` or `-y/--height` and the aspect ratio will be applied to get the other size. otherwise, it's applied to the height using the default width.
   - doubles or ratios (ie, `16:9`) are allowed
-- `-s/--antialias/samples`: number of antialiasing samples per pixel
+- `-s/--antialias-samples`: number of antialiasing samples per pixel
   - default `10`
 - `-d/--max-recursion-depth`: maximum recursion depth for one ray
   - default `50`
+- `-F/--fov`: image field of view in degrees
+  - default `80`
 - `-w/--workers`: number of worker threads
   - default `4`
 - `-f/--frac`: fractional rendering, renders only a fraction of the image
@@ -48,6 +53,12 @@ make
   - use the `joiner` binary to join them (list of files to join in order, then the destination file)
   - see [`megarender.sh`](megarender.sh) for an example of how I used this to parallelize across 3 devices with SSH
   - format is a fraction: for example, 1/3, 2/3, and 3/3 will get all 3 parts of an image
+- `-A/--adaptive-sampling`: enables adaptive sampling, which will stop collecting samples for a pixel early if the 
+  current color is within a confidence interval (controlled with `-t`).
+- `-t/--as-tolerance`: confidence interval threshold, below which pixel sampling stops early. default
+  - default `1.8`
+- `-S/--scene`: name of the scene to render
+  - default `house`, otherwise `demo`
 - `(filename)`: change output file
   - `.ppm` and `.png` are supported
   - default `out.png`

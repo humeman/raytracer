@@ -13,6 +13,7 @@
 #include <macros.hpp>
 #include <camera.hpp>
 #include <scenes/house.hpp>
+#include <scenes/demo.hpp>
 
 #include <stdexcept>
 #include <iostream>
@@ -24,7 +25,8 @@
 #define DEFAULT_FILE "out.png"
 
 const std::map<std::string, std::function<void(Scene &, std::vector<std::shared_ptr<Object>> &, CameraParams &)>> SCENES = {
-    {"house", house_md}
+    {"house", house_md},
+    {"demo", demo}
 };
 
 class Flags {
