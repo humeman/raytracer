@@ -21,6 +21,7 @@ class CameraParams {
         double defocus_angle = 0.6;
         double focus_distance = 5.0;
         double fov = 80;
+        std::string scene = "house";
 
         bool frac = false;
         int frac_i = 0;
@@ -68,7 +69,7 @@ class Camera {
 
         Color color(const Scene &scene, const std::vector<std::shared_ptr<Object>> &lights, const Ray &ray, int x, int y) const;
         Color color(const Scene &scene, const std::vector<std::shared_ptr<Object>> &lights, const Ray &ray, int depth, int x, int y) const;
-        Ray ray(int x, int y) const;
+        Ray ray(int x, int y, bool rand_offset) const;
         int next_row();
         void render_row(const Scene &scene, const std::vector<std::shared_ptr<Object>> &lights, int y);
         void threaded_processor(const Scene &scene, const std::vector<std::shared_ptr<Object>> &lights);

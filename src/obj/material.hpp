@@ -61,9 +61,11 @@ class Metal : public Material {
 class Dielectric : public Material {
     private:
         double refraction;
+        Color tint;
 
     public:
-        Dielectric(double refraction) : refraction(refraction) {}
+        Dielectric(double refraction, Color tint = Color::white) 
+            : refraction(refraction), tint(tint) {}
 
         bool scatter(const Ray &r_in, const HitResult &res, ScatterResult &scatter_res) const override;
 };

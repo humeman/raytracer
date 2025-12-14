@@ -65,10 +65,15 @@ Color Camera::color(const Scene &scene, const std::vector<std::shared_ptr<Object
         return scatter_res.attenuation % color(scene, lights, scatter_res.scattered, depth + 1, x, y);
     }
 
-    std::shared_ptr<PDF> pdf = std::make_shared<MixPDF>(
-        std::make_shared<ObjectListPDF>(lights, res.point),
-        scatter_res.pdf
-    );
+    std::shared_ptr<PDF> pdf;
+    if (lights.size() > 0) {
+        pdf = std::make_shared<MixPDF>(
+            std::make_shared<ObjectListPDF>(lights, res.point),
+            scatter_res.pdf
+        );
+    } else {
+        pdf = scatter_res.pdf;
+    }
 
     Ray scattered = Ray(res.point, pdf->generate(), ray.get_time());
     double pdf_val = pdf->value(scattered.get_direction());
@@ -80,8 +85,12 @@ Color Camera::color(const Scene &scene, const std::vector<std::shared_ptr<Object
 
 Interval ANTIALIAS_OFFSET_INTERVAL(-0.5, 0.5);
 
-Ray Camera::ray(int x, int y) const {
-    Vec3 offset(ANTIALIAS_OFFSET_INTERVAL.random(), ANTIALIAS_OFFSET_INTERVAL.random(), 0.0);
+Ray Camera::ray(int x, int y, bool rand_offset = true) const {
+    Vec3 offset(0, 0, 0);
+    if (rand_offset) {
+        offset.a = ANTIALIAS_OFFSET_INTERVAL.random();
+        offset.b = ANTIALIAS_OFFSET_INTERVAL.random();
+    }
     Vec3 sample = pixel00 + ((double) x + offset.a) * pixel_delta_u + ((double) y + offset.b) * pixel_delta_v;
     Vec3 origin;
     if (params.defocus_angle > 0.0) {
@@ -188,13 +197,16 @@ void Camera::render_row(const Scene &scene, const std::vector<std::shared_ptr<Ob
                 as_sample_count += s;
             }
             col /= (s + 1.0);
-        } else {
+        } else if (params.antialias_samples > 0) {
             for (int s = 0; s < params.antialias_samples; s++) {
                 r = ray(x, y);
                 col += color(scene, lights, r, x, y);
             }
 
             col /= (double) params.antialias_samples;
+        } else {
+            r = ray(x, y, false);
+            col = color(scene, lights, r, x, y);
         }
         col.a = INTENSITY_RANGE.clamp(col.a);
         col.b = INTENSITY_RANGE.clamp(col.b);

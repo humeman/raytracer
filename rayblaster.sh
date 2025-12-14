@@ -3,8 +3,8 @@
 set -e
 
 # ----- Config -----
-HOSTS=("local" "node1" "camden-laptop")
-ARGS="-s 100 -w 8"
+HOSTS=("local" "node1")
+ARGS="-s 25 -A -t 1.65 -x 192 -y 108 -w 12"
 OUT="out.png"
 # ------------------
 
@@ -65,7 +65,7 @@ while true; do
                 scp "$HOST:~/raytracer/$FILENAME" "$FILENAME" > /dev/null 2>&1 || true
                 if [ -f "$FILENAME" ]; then
                     STATUS[$i]=1
-                    ssh "$HOST" "rm ~/raytracer/$FILENAME" > /dev/null 2>&1 || true
+                    # ssh "$HOST" "rm ~/raytracer/$FILENAME" > /dev/null 2>&1 || true
                     echo "  - $HOST is done"
                 fi
             fi
@@ -92,6 +92,6 @@ for (( i=0; i<NUM_HOSTS; i++ )); do
 done
 ./joiner $ARGS $OUT > /dev/null 2>&1
 echo "  - Cleaning up"
-rm $ARGS
+# rm $ARGS
 echo "  - Done"
 echo "- Written to $OUT"

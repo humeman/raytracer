@@ -53,11 +53,24 @@ make
   - default `out.png`
 
 ## citations
-### code
-
+### algorithms
+- [Ray Tracing in One Weekend](https://raytracing.github.io/books/RayTracingInOneWeekend.html)
+- [Ray Tracing: The Next Week](https://raytracing.github.io/books/RayTracingTheNextWeek.html)
+- [Ray Tracing: The Rest of Your Life](https://raytracing.github.io/books/RayTracingTheRestOfYourLife.html)
 - [Adaptive Sampling](https://cs184.eecs.berkeley.edu/sp21/docs/proj3-1-part-5) from Berkeley CS184/284A
+- [Fast, Minimum Storage Ray/Triangle Intersection](https://cadxfem.org/inf/Fast%20MinimumStorage%20RayTriangle%20Intersection.pdf)
 
 ### scene
 I haven't bundled any of these here, to render you'll have to download them
 and write them with the names noted into `assets/`.
-- `chair.glb`: [Executive Chair](https://poly.pizza/m/hW11P9DDXa) by Zsky [CC-BY](https://creativecommons.org/licenses/by/3.0/) via Poly Pizza
+- `chair.glb`: [Executive Chair](https://poly.pizza/m/hW11P9DDXa) by Zsky
+- `lamp.glb`: [Desk lamp](https://sketchfab.com/3d-models/desk-lamp-7377ec591df04445a1aae370017aaa13) by KaramellGlass 
+- `computer.glb`: [Desktop Computer](https://sketchfab.com/3d-models/desktop-computer-ce4e4200cf0b472d956c36ab7bb94405) by GeniusPilot2016
+- `chair.glb`: [Lowpoly Office Chair](https://sketchfab.com/3d-models/lowpoly-office-chair-e5719afff2464e5e810115532e16cc05) by sleepyjoshua
+- `books.glb`: [Books](https://sketchfab.com/3d-models/books-62fc2898df55483f87461a8f12a0113f) by igor-tkachenko
+- `coffee_cup.glb`: [Coffee Cup Modern !](https://sketchfab.com/3d-models/coffee-cup-modern-e5c9000d9f204c3b88daaf2b953ea459) by Nexus Development
+- `book_stack.glb`: [Pila De Libros • Stack of books](https://sketchfab.com/3d-models/pila-de-libros-stack-of-books-66a6934a2201484e87980d5efa3883cc#download) by Blender Pink
+- `skull.glb`: [Skull Proportions & Key Landmarks](https://sketchfab.com/3d-models/skull-proportions-key-landmarks-20c0f43e3778481c830978709d784681) by Shape Foundations
+- `book_row.glb`: [Books](https://sketchfab.com/3d-models/books-e71051054d614b9ebfb9c0a600942b10) by Rifqi-02
+- `globe.glb`: [Lowpoly/Stylised GLOBE](https://sketchfab.com/3d-models/lowpolystylised-globe-aecef111255146418e63d84e99812edb#download) by Ethan C
+- `visitor_chair.glb`: [Chair](https://poly.pizza/m/2aXnX7qocj1) by CMHT Oculus

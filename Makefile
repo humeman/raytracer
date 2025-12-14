@@ -84,7 +84,7 @@ build/joiner.o: src/joiner.cpp src/macros.hpp
 	mkdir -p build
 	$(CXX) $(CXXFLAGS) -c src/joiner.cpp -o build/joiner.o
 
-build/main.o: src/main.cpp src/macros.hpp
+build/main.o: src/main.cpp src/macros.hpp src/scenes/house.hpp
 	mkdir -p build
 	$(CXX) $(CXXFLAGS) -c src/main.cpp -o build/main.o
 

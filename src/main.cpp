@@ -12,13 +12,20 @@
 #include <obj/cdm.hpp>
 #include <macros.hpp>
 #include <camera.hpp>
+#include <scenes/house.hpp>
 
 #include <stdexcept>
 #include <iostream>
 #include <cmath>
 #include <chrono>
+#include <map>
+#include <functional>
 
 #define DEFAULT_FILE "out.png"
+
+const std::map<std::string, std::function<void(Scene &, std::vector<std::shared_ptr<Object>> &, CameraParams &)>> SCENES = {
+    {"house", house_md}
+};
 
 class Flags {
     private:
@@ -55,6 +62,7 @@ class Flags {
                         "  -w/--workers:             number of worker threads, defaults to " << params.workers << "\n"
                         "  -f/--frac:                renders only a fraction of the image (ie, 1/3, 2/3, and 3/3) for splitting\n"
                         "                             rendering across multiple machines\n"
+                        "  -S/--scene:               scene to render, defaults to " << params.scene << "\n" <<
                         "  (filename):               output file, defaults to " DEFAULT_FILE "\n";
                     exit = true;
                     return;
@@ -157,6 +165,20 @@ class Flags {
                     if (params.frac_i == 0 || params.frac_i > params.frac_denom) {
                         throw EXC("-f/--frac numerator out of bounds (1-indexed)");
                     }
+                } else if (arg == "-S" || arg == "--scene") {
+                    if (i + 1 >= argc) {
+                        throw EXC("-S/--scene requires a scene name");
+                    }
+                    params.scene = std::string(argv[++i]);
+                    if (SCENES.find(params.scene) == SCENES.end()) {
+                        std::string all;
+                        for (auto &scene : SCENES) {
+                            if (!all.empty())
+                                all += ", ";
+                            all += scene.first;
+                        }
+                        throw EXC("invalid scene: " + params.scene + "\npick one of: " + all);
+                    }
                 } else {
                     if (file_seen) {
                         throw EXC("only one output file allowed");
@@ -235,6 +257,8 @@ void progress(int x, int y, CameraParams &params, std::chrono::system_clock::tim
     CLOG("Rendering (" << coord << "): " << percent << "%" << est);
 }
 
+
+
 void run(int argc, char *argv[]) {
     Flags flags(argc, argv);
     if (flags.exit) return;
@@ -243,44 +267,12 @@ void run(int argc, char *argv[]) {
 
     Scene scene;
     std::vector<std::shared_ptr<Object>> lights;
-    scene.add(std::make_shared<Sphere>(Vec3(0.0, -100.5, -1.0), 100.0, std::make_shared<Diffuse>(std::make_shared<ColorTexture>(0.8, 0.8, 0.0))));
-    // scene.add(std::make_shared<Sphere>(Vec3(0.0, 0.0, -1.2), Vec3(0.0, 0.2, -1.2),0.5, std::make_shared<Diffuse>(std::make_shared<ColorTexture>(0.1, 0.2, 0.5))));
-    // scene.add(std::make_shared<Sphere>(Vec3(-1.0, 0.0, -1.0), 0.5, std::make_shared<Dielectric>(1.5)));
-    // scene.add(std::make_shared<Sphere>(Vec3(-1.0, 0.0, -1.0), 0.4, std::make_shared<Dielectric>(1.0 / 1.5)));
-    // scene.add(std::make_shared<Sphere>(Vec3(1.0, 0.0, -1.0), 0.5, std::make_shared<Diffuse>(std::make_shared<ColorTexture>(1.0, 0.0, 0.0))));
-    auto andres = Image::read_any("assets/andres.png");
-    auto texture = std::make_shared<ImageTexture>(andres);
-    auto light = std::make_shared<Quad>(Vec3(2.0, 0.1, 2.0), Vec3(0, 0.1, -2.0), Vec3(-2.0, 0.1, 0), std::make_shared<DiffuseLight>(std::make_shared<ColorTexture>(4, 4, 4)));
-    scene.add(light);
-    lights.push_back(light);
-    scene.add(std::make_shared<CDM>(
-        std::make_shared<Sphere>(
-            Vec3(1, 0.5, 1), 
-            2, 
-            std::make_shared<Isotropic>(
-                std::make_shared<ColorTexture>(1.0, 0.7, 0.3)
-            )),
-        0.7
-    ));
-
-    ModelLoader loader(scene);
-    loader.load(
-        "assets/chair.glb",
-        Vec3(0, 0, 0),
-        4
-    );
-    // scene.add(std::make_shared<Sphere>(Vec3(-2.0, 0.7, -3), 2, std::make_shared<Diffuse>(texture)));
-    // scene.add(std::make_shared<Triangle>(Vec3(-1.0, 0.0, -2.0), Vec3(1.0, 0.0, 1.0), Vec3(2.0, 0.0, -1.0), Vec3(0.25, 0.5, 0), Vec3(0.25, 0.75, 0), Vec3(0.75, 0.75, 0), std::make_shared<Diffuse>(texture)));
-    // scene.add(std::make_shared<Quad>(Vec3(1.0, 1.0, 0), Vec3(1, 0, 0), Vec3(0, 1, 0), std::make_shared<Diffuse>(texture)));
-
+    std::cout << "Generating scene..." << std::endl;
+    auto scene_generator = SCENES.at(flags.params.scene);
+    scene_generator(scene, lights, flags.params);
     int count = scene.size();
+    std::cout << "Generating BVH..." << std::endl;
     scene = Scene(std::make_shared<BVHNode>(scene));
-    
-    // flags.params.background = std::make_shared<ColorTexture>(0.2f, 0.7f, 0.2f);
-    flags.params.look_from = Vec3(3.0, 3.0, 3.0);
-    flags.params.look_at = Vec3(0.0, 0.0, 0.0);
-    flags.params.vup = Vec3(0.0, 1.0, 0.0);
-    flags.params.fov = 65;
 
     // Give this warning before rendering finishes
     #ifndef PNGPP
@@ -290,7 +282,9 @@ void run(int argc, char *argv[]) {
     }
     #endif
 
+    std::cout << "Ready!" << std::endl << std::endl;
     std::cout << "Render options:\n"
+        << "  Scene: " << flags.params.scene << "\n"
         << "  Output: " << flags.file << "\n"
         << "  Size: " << flags.params.width << "x" << flags.params.height << "\n"
         << "  Antialias samples: " << flags.params.antialias_samples << "\n"

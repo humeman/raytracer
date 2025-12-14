@@ -30,7 +30,7 @@ bool Metal::scatter(const Ray &r_in, const HitResult &res, ScatterResult &scatte
 }
 
 bool Dielectric::scatter(const Ray &r_in, const HitResult &res, ScatterResult &scatter_res) const {
-    scatter_res.attenuation = Color::white;
+    scatter_res.attenuation = tint;
     double ri = res.is_front_face ? (1.0 / refraction) : refraction;
     Vec3 unit = r_in.get_direction().to_unit();
     double cos_t = std::fmin((-unit * res.normal), 1.0);

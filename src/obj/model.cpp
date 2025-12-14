@@ -47,6 +47,24 @@ void scale_and_translate(Vec3 &point, const Vec3 &translate, double scale) {
     point.c = (point.c * scale) + translate.c;
 }
 
+void update_minmax(Vec3 &min, Vec3 &max, Vec3 &check) {
+    if (check.a < min.a) min.a = check.a;
+    if (check.b < min.b) min.b = check.b;
+    if (check.c < min.c) min.c = check.c;
+    if (check.a > max.a) max.a = check.a;
+    if (check.b > max.b) max.b = check.b;
+    if (check.c > max.c) max.c = check.c;
+}
+
+void init_minmax(Vec3 &min, Vec3 &max, Vec3 &check) {
+    min.a = check.a;
+    min.b = check.b;
+    min.c = check.c;
+    max.a = check.a;
+    max.b = check.b;
+    max.c = check.c;
+}
+
 void ModelLoader::load(
         const std::string &path, 
         const Vec3 &origin, 
@@ -59,6 +77,10 @@ void ModelLoader::load(
     if (!ascene) {
         throw EXC("assimp error for " + path + ": " + importer.GetErrorString());
     }
+
+    bool set = false;
+    Vec3 min;
+    Vec3 max;
 
     for (uint i = 0; i < ascene->mNumMeshes; i++) {
         auto *mesh = ascene->mMeshes[i];
@@ -83,20 +105,27 @@ void ModelLoader::load(
             Vec3 b(ab[0], ab[1], ab[2]);
             Vec3 c(ac[0], ac[1], ac[2]);
 
-            scale_and_translate(a, origin, scale);
-            scale_and_translate(b, origin, scale);
-            scale_and_translate(c, origin, scale);
-
             if (rot_angle != 0 && rot_axis.magnitude_squared() != 0) {
                 rotate(a, rot_axis, rot_angle);
                 rotate(b, rot_axis, rot_angle);
                 rotate(c, rot_axis, rot_angle);
             }
 
-            // std::cout << "a: " << a.a << " " << a.b << " " << a.c << std::endl;
-            // std::cout << "b: " << b.a << " " << b.b << " " << b.c << std::endl;
-            // std::cout << "c: " << c.a << " " << c.b << " " << c.c << std::endl;
-            // std::cout << "col: " << color.a << " " << color.b << " " << color.c << std::endl;
+            scale_and_translate(a, origin, scale);
+            scale_and_translate(b, origin, scale);
+            scale_and_translate(c, origin, scale);
+
+            if (!set) {
+                init_minmax(min, max, a);
+                update_minmax(min, max, b);
+                update_minmax(min, max, c);
+                set = true;
+            } else {
+                update_minmax(min, max, a);
+                update_minmax(min, max, b);
+                update_minmax(min, max, c);
+            }
+
             std::shared_ptr<Triangle> triangle = std::make_shared<Triangle>(
                 a, b, c, std::make_shared<Diffuse>(std::make_shared<ColorTexture>(
                     color
@@ -105,6 +134,8 @@ void ModelLoader::load(
             scene.add(triangle);
         }
     }
+    std::cout << "min: " << min.a << " " << min.b << " " << min.c << std::endl;
+    std::cout << "max: " << max.a << " " << max.b << " " << max.c << std::endl;
 
     #else
     std::cerr << "warn: not built with assimp. model " << path << " will be skipped" << std::endl;
