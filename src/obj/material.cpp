@@ -10,9 +10,9 @@ bool Diffuse::scatter(const Ray &r_in, const HitResult &res, ScatterResult &scat
         direction = res.normal;
     }
 
-    scatter_res.scattered = Ray(res.point, direction, r_in.get_time());
+    // scatter_res.scattered = Ray(res.point, direction, r_in.get_time());
     scatter_res.attenuation = texture->value(res.u, res.v, res.point);
-    // scatter_res.pdf = std::make_shared<COSPDF>(res.normal);
+    scatter_res.pdf = std::make_shared<COSPDF>(res.normal);
     return true;
 }
 
